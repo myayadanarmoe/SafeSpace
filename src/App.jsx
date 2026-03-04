@@ -7,6 +7,7 @@ import Signup from "./components/Signup";
 import Login from "./components/Login";
 import AdminPage from "./components/AdminPage";
 import ProfilePage from "./components/ProfilePage"; // Add this import
+import Availability from "./components/Availabilty";
 
 function App() {
   return (
@@ -19,7 +20,8 @@ function App() {
         <Route path="/sign-up" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<AdminPage />} />
-        <Route path="/profile" element={<ProfilePage />} /> {/* Add this route */}
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/availability" element={<Availability />} /> 
       </Routes>
     </Router>
   );

@@ -22,31 +22,24 @@ export default function ProfileDropdown() {
     // Load user on mount
     loadUser();
 
-    // Listen for storage events (when localStorage changes in another tab)
+    // Listen for storage events
     const handleStorageChange = (e) => {
       if (e.key === 'user') {
         loadUser();
       }
     };
 
-    // Listen for custom login event (we'll dispatch this from Login page)
+    // Listen for custom login event
     const handleLogin = () => {
-      loadUser();
-    };
-
-    // Listen for route changes (when navigating back to home)
-    const handleRouteChange = () => {
       loadUser();
     };
 
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('login', handleLogin);
-    window.addEventListener('popstate', handleRouteChange);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('login', handleLogin);
-      window.removeEventListener('popstate', handleRouteChange);
     };
   }, []);
 
@@ -63,28 +56,25 @@ export default function ProfileDropdown() {
   }, []);
 
   const handleLogout = () => {
-    // Clear user from localStorage
     localStorage.removeItem("user");
     setUser(null);
     setIsOpen(false);
-    
-    // Dispatch logout event
     window.dispatchEvent(new Event('logout'));
-    
-    // Redirect to home page
     navigate("/");
+  };
+
+  // Check if user is a mental health professional
+  const isMentalHealthProfessional = () => {
+    if (!user) return false;
+    const professionalTypes = ['Psychiatrist', 'Psychologist', 'Therapist'];
+    return professionalTypes.includes(user.type);
   };
 
   // Get initials for avatar
   const getInitials = () => {
     if (!user) return "?";
-    
-    if (user.username) {
-      return user.username.charAt(0).toUpperCase();
-    }
-    if (user.email) {
-      return user.email.charAt(0).toUpperCase();
-    }
+    if (user.username) return user.username.charAt(0).toUpperCase();
+    if (user.email) return user.email.charAt(0).toUpperCase();
     return "U";
   };
 
@@ -129,6 +119,7 @@ export default function ProfileDropdown() {
   }
 
   const profilePicUrl = getProfilePicUrl();
+  const isProfessional = isMentalHealthProfessional();
 
   return (
     <div className="profile-dropdown" ref={dropdownRef}>
@@ -212,11 +203,40 @@ export default function ProfileDropdown() {
 
           <Link to="/profile" className="dropdown-item" onClick={() => setIsOpen(false)}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" fill="currentColor"/>
-                <path d="M8 9C3.58172 9 0 12.5817 0 17H16C16 12.5817 12.4183 9 8 9Z" fill="currentColor"/>
+              <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" fill="currentColor"/>
+              <path d="M8 9C3.58172 9 0 12.5817 0 17H16C16 12.5817 12.4183 9 8 9Z" fill="currentColor"/>
             </svg>
             My Profile
           </Link>
+
+          {/* Mental Health Professional Menu Items */}
+          {isProfessional && (
+            <>
+              <Link to="/availability" className="dropdown-item" onClick={() => setIsOpen(false)}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="4" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M5 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M11 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="5" cy="9" r="1" fill="currentColor"/>
+                  <circle cx="8" cy="9" r="1" fill="currentColor"/>
+                  <circle cx="11" cy="9" r="1" fill="currentColor"/>
+                </svg>
+                Availability
+              </Link>
+
+              <Link to="/my-patients" className="dropdown-item" onClick={() => setIsOpen(false)}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" fill="currentColor"/>
+                  <path d="M12 9C13.6569 9 15 10.3431 15 12V13H13V12C13 11.4477 12.5523 11 12 11V9Z" fill="currentColor"/>
+                  <path d="M4 9C2.34315 9 1 10.3431 1 12V13H3V12C3 11.4477 3.44772 11 4 11V9Z" fill="currentColor"/>
+                  <path d="M8 9C9.65685 9 11 10.3431 11 12V13H5V12C5 10.3431 6.34315 9 8 9Z" fill="currentColor"/>
+                </svg>
+                My Patients
+              </Link>
+
+              <div className="dropdown-divider"></div>
+            </>
+          )}
 
           {user.type === 'Admin' && (
             <Link to="/admin" className="dropdown-item" onClick={() => setIsOpen(false)}>

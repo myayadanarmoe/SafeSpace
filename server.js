@@ -484,3 +484,158 @@ app.get("/api/admin/user-types", (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
+
+// ===== Availability Routes (for clinicianavailability table) =====
+
+// Get availability for a clinician
+app.get("/api/availability/:clinicianId", (req, res) => {
+  const { clinicianId } = req.params;
+  
+  const sql = "SELECT * FROM clinicianavailability WHERE clinicianID = ? ORDER BY FIELD(day_of_the_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), startTime";
+  
+  db.query(sql, [clinicianId], (err, results) => {
+    if (err) {
+      console.error("❌ MySQL error:", err);
+      return res.status(500).json({ message: "Database error" });
+    }
+    
+    res.json({ availability: results });
+  });
+});
+
+// Add availability slot
+app.post("/api/availability", (req, res) => {
+  const { clinicianID, day_of_the_week, startTime, endTime } = req.body;
+  
+  if (!clinicianID || !day_of_the_week || !startTime || !endTime) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+  
+  // Check if slot already exists
+  const checkSql = "SELECT * FROM clinicianavailability WHERE clinicianID = ? AND day_of_the_week = ? AND startTime = ? AND endTime = ?";
+  
+  db.query(checkSql, [clinicianID, day_of_the_week, startTime, endTime], (checkErr, checkResults) => {
+    if (checkErr) {
+      console.error("❌ MySQL error:", checkErr);
+      return res.status(500).json({ message: "Database error" });
+    }
+    
+    if (checkResults.length > 0) {
+      return res.status(400).json({ message: "This availability slot already exists" });
+    }
+    
+    // Insert new slot
+    const insertSql = "INSERT INTO clinicianavailability (clinicianID, day_of_the_week, startTime, endTime) VALUES (?, ?, ?, ?)";
+    
+    db.query(insertSql, [clinicianID, day_of_the_week, startTime, endTime], (err, result) => {
+      if (err) {
+        console.error("❌ MySQL error:", err);
+        return res.status(500).json({ message: "Database error" });
+      }
+      
+      res.status(201).json({ 
+        message: "Availability added successfully",
+        availabilityID: result.insertId
+      });
+    });
+  });
+});
+
+// Delete availability slot
+app.delete("/api/availability/:availabilityId", (req, res) => {
+  const { availabilityId } = req.params;
+  
+  const sql = "DELETE FROM clinicianavailability WHERE availabilityID = ?";
+  
+  db.query(sql, [availabilityId], (err, result) => {
+    if (err) {
+      console.error("❌ MySQL error:", err);
+      return res.status(500).json({ message: "Database error" });
+    }
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Availability slot not found" });
+    }
+    
+    res.json({ message: "Availability deleted successfully" });
+  });
+});
+
+// Update availability slot (optional)
+app.put("/api/availability/:availabilityId", (req, res) => {
+  const { availabilityId } = req.params;
+  const { day_of_the_week, startTime, endTime } = req.body;
+  
+  const sql = "UPDATE clinicianavailability SET day_of_the_week = ?, startTime = ?, endTime = ? WHERE availabilityID = ?";
+  
+  db.query(sql, [day_of_the_week, startTime, endTime, availabilityId], (err, result) => {
+    if (err) {
+      console.error("❌ MySQL error:", err);
+      return res.status(500).json({ message: "Database error" });
+    }
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Availability slot not found" });
+    }
+    
+    res.json({ message: "Availability updated successfully" });
+  });
+});
+
+// Add availability slot with server-side validation
+app.post("/api/availability", (req, res) => {
+  const { clinicianID, day_of_the_week, startTime, endTime } = req.body;
+  
+  if (!clinicianID || !day_of_the_week || !startTime || !endTime) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+  
+  // Validate that end time is after start time
+  if (startTime >= endTime) {
+    return res.status(400).json({ message: "End time must be after start time" });
+  }
+  
+  // Check for overlapping slots
+  const overlapSql = `
+    SELECT * FROM clinicianavailability 
+    WHERE clinicianID = ? 
+    AND day_of_the_week = ?
+    AND (
+      (startTime <= ? AND endTime > ?) OR
+      (startTime < ? AND endTime >= ?) OR
+      (startTime >= ? AND endTime <= ?)
+    )
+  `;
+  
+  db.query(overlapSql, [
+    clinicianID, 
+    day_of_the_week, 
+    endTime, startTime,  // For slots that start before and end after
+    endTime, endTime,     // For slots that start before and end at
+    startTime, endTime    // For slots completely inside
+  ], (overlapErr, overlapResults) => {
+    if (overlapErr) {
+      console.error("❌ MySQL error:", overlapErr);
+      return res.status(500).json({ message: "Database error" });
+    }
+    
+    if (overlapResults.length > 0) {
+      return res.status(400).json({ message: "This time slot overlaps with existing availability" });
+    }
+    
+    // Insert new slot
+    const insertSql = "INSERT INTO clinicianavailability (clinicianID, day_of_the_week, startTime, endTime) VALUES (?, ?, ?, ?)";
+    
+    db.query(insertSql, [clinicianID, day_of_the_week, startTime, endTime], (err, result) => {
+      if (err) {
+        console.error("❌ MySQL error:", err);
+        return res.status(500).json({ message: "Database error" });
+      }
+      
+      res.status(201).json({ 
+        message: "Availability added successfully",
+        availabilityID: result.insertId
+      });
+    });
+  });
+});
