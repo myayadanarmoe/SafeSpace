@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../ProfilePage.css";
+import "../styles/ProfilePage.css";
 
 export default function ProfilePage() {
   const navigate = useNavigate();

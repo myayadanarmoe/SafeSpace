@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../AdminPage.css";
+import "../styles/AdminPage.css";
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -17,13 +17,36 @@ export default function AdminPage() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [userTypes, setUserTypes] = useState([]);
   
+  // Modal message states (for errors inside modals)
+  const [editModalMessage, setEditModalMessage] = useState({ text: "", type: "" });
+  const [createModalMessage, setCreateModalMessage] = useState({ text: "", type: "" });
+  
   // Form states
-  const [editRole, setEditRole] = useState("");
+  const [editForm, setEditForm] = useState({
+    username: "",
+    email: "",
+    role: ""
+  });
   const [newUser, setNewUser] = useState({
+    username: "",
     email: "",
     password: "",
     type: "Free User"
   });
+
+  // Lock body scroll when modals are open
+  useEffect(() => {
+    if (showEditModal || showCreateModal) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    
+    // Cleanup function
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [showEditModal, showCreateModal]);
 
   // Fetch user types on component mount
   useEffect(() => {
@@ -67,6 +90,16 @@ export default function AdminPage() {
     setTimeout(() => setMessage({ text: "", type: "" }), 3000);
   };
 
+  const showEditModalMessage = (text, type) => {
+    setEditModalMessage({ text, type });
+    setTimeout(() => setEditModalMessage({ text: "", type: "" }), 3000);
+  };
+
+  const showCreateModalMessage = (text, type) => {
+    setCreateModalMessage({ text, type });
+    setTimeout(() => setCreateModalMessage({ text: "", type: "" }), 3000);
+  };
+
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
@@ -74,29 +107,38 @@ export default function AdminPage() {
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
-    setEditRole(user.type);
+    setEditForm({
+      username: user.username,
+      email: user.email,
+      role: user.type
+    });
+    setEditModalMessage({ text: "", type: "" }); // Clear any previous messages
     setShowEditModal(true);
   };
 
-  const handleUpdateRole = async () => {
+  const handleUpdateUser = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${selectedUser.id}/role`, {
+      const res = await fetch(`http://localhost:5000/api/admin/users/${selectedUser.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: editRole }),
+        body: JSON.stringify({
+          username: editForm.username,
+          email: editForm.email,
+          type: editForm.role
+        }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        showMessage("User role updated successfully", "success");
+        showMessage("User updated successfully", "success");
         setShowEditModal(false);
         fetchUsers();
       } else {
-        showMessage(data.message, "error");
+        showEditModalMessage(data.message || "Error updating user", "error");
       }
     } catch (err) {
-      showMessage("Network error", "error");
+      showEditModalMessage("Network error", "error");
     }
   };
 
@@ -115,13 +157,13 @@ export default function AdminPage() {
       if (res.ok) {
         showMessage("User created successfully", "success");
         setShowCreateModal(false);
-        setNewUser({ email: "", password: "", type: "Free User" });
+        setNewUser({ username: "", email: "", password: "", type: "Free User" });
         fetchUsers();
       } else {
-        showMessage(data.message, "error");
+        showCreateModalMessage(data.message || "Error creating user", "error");
       }
     } catch (err) {
-      showMessage("Network error", "error");
+      showCreateModalMessage("Network error", "error");
     }
   };
 
@@ -162,6 +204,14 @@ export default function AdminPage() {
     return roleClasses[role] || 'badge-default';
   };
 
+  // Close modal when clicking on backdrop
+  const handleBackdropClick = (e) => {
+    if (e.target.classList.contains('modal')) {
+      setShowEditModal(false);
+      setShowCreateModal(false);
+    }
+  };
+
   return (
     <div className="admin-container">
       <div className="admin-header-section">
@@ -171,7 +221,8 @@ export default function AdminPage() {
         </button>
       </div>
 
-      {message.text && (
+      {/* Main message - only show when no modals are open */}
+      {message.text && !showEditModal && !showCreateModal && (
         <div className={`message ${message.type}`}>
           {message.text}
         </div>
@@ -181,14 +232,17 @@ export default function AdminPage() {
         <div className="search-bar">
           <input
             type="text"
-            placeholder="Search users by email or role..."
+            placeholder="Search users by username, email or role..."
             value={searchTerm}
             onChange={handleSearch}
           />
         </div>
         <button 
           className="btn-create"
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            setCreateModalMessage({ text: "", type: "" });
+            setShowCreateModal(true);
+          }}
         >
           + Create New User
         </button>
@@ -203,6 +257,7 @@ export default function AdminPage() {
               <thead>
                 <tr>
                   <th>ID</th>
+                  <th>Username</th>
                   <th>Email</th>
                   <th>Role</th>
                   <th>Created At</th>
@@ -212,12 +267,13 @@ export default function AdminPage() {
               <tbody>
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="no-data">No users found</td>
+                    <td colSpan="6" className="no-data">No users found</td>
                   </tr>
                 ) : (
                   users.map((user) => (
                     <tr key={user.id}>
                       <td>{user.id}</td>
+                      <td>{user.username}</td>
                       <td>{user.email}</td>
                       <td>
                         <span className={`role-badge ${getRoleBadgeClass(user.type)}`}>
@@ -230,7 +286,7 @@ export default function AdminPage() {
                           className="btn-edit"
                           onClick={() => handleEditClick(user)}
                         >
-                          Edit Role
+                          Edit
                         </button>
                         <button
                           className="btn-delete"
@@ -266,18 +322,46 @@ export default function AdminPage() {
         </>
       )}
 
-      {/* Edit Role Modal */}
+      {/* Edit User Modal */}
       {showEditModal && selectedUser && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>Edit User Role</h2>
-            <p>User: {selectedUser.email}</p>
+        <div className="modal" onClick={handleBackdropClick}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Edit User</h2>
             
+            {/* Modal message */}
+            {editModalMessage.text && (
+              <div className={`message ${editModalMessage.type}`}>
+                {editModalMessage.text}
+              </div>
+            )}
+            
+            <div className="form-group">
+              <label>Username:</label>
+              <input
+                type="text"
+                value={editForm.username}
+                onChange={(e) => setEditForm({...editForm, username: e.target.value})}
+                required
+                placeholder="Enter username"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Email:</label>
+              <input
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                required
+                placeholder="Enter email"
+              />
+            </div>
+
             <div className="form-group">
               <label>Select Role:</label>
               <select
-                value={editRole}
-                onChange={(e) => setEditRole(e.target.value)}
+                value={editForm.role}
+                onChange={(e) => setEditForm({...editForm, role: e.target.value})}
               >
                 {userTypes.map(type => (
                   <option key={type} value={type}>{type}</option>
@@ -286,8 +370,8 @@ export default function AdminPage() {
             </div>
 
             <div className="modal-actions">
-              <button className="btn-save" onClick={handleUpdateRole}>
-                Update Role
+              <button className="btn-save" onClick={handleUpdateUser}>
+                Update User
               </button>
               <button className="btn-cancel" onClick={() => setShowEditModal(false)}>
                 Cancel
@@ -299,11 +383,29 @@ export default function AdminPage() {
 
       {/* Create User Modal */}
       {showCreateModal && (
-        <div className="modal">
-          <div className="modal-content">
+        <div className="modal" onClick={handleBackdropClick}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Create New User</h2>
             
+            {/* Modal message */}
+            {createModalMessage.text && (
+              <div className={`message ${createModalMessage.type}`}>
+                {createModalMessage.text}
+              </div>
+            )}
+            
             <form onSubmit={handleCreateUser}>
+              <div className="form-group">
+                <label>Username:</label>
+                <input
+                  type="text"
+                  value={newUser.username}
+                  onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                  required
+                  placeholder="Enter username"
+                />
+              </div>
+
               <div className="form-group">
                 <label>Email:</label>
                 <input

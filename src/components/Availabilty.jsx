@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../Availability.css";
+import "../styles/Availability.css";
 
 export default function Availability() {
   const navigate = useNavigate();
