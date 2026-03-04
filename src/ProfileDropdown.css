@@ -217,3 +217,85 @@
 .dark-mode .dropdown-divider {
   background-color: #4a5568;
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .profile-name {
+    display: none;
+  }
+  
+  .profile-trigger {
+    padding: 5px;
+  }
+  
+  .dropdown-menu {
+    width: 260px;
+    right: -10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-link, .signup-link {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .login-link {
+    margin-right: 4px;
+  }
+}
+
+/* Profile Avatar with Image Support */
+.profile-avatar-wrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* Dropdown Avatar with Image Support */
+.dropdown-avatar-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid white;
+  position: relative;
+}
+
+.dropdown-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dropdown-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+}

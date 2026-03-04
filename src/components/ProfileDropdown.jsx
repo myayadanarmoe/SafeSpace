@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "./ProfileDropdown.css";
+import "../ProfileDropdown.css";
 
 export default function ProfileDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,12 +8,46 @@ export default function ProfileDropdown() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Load user from localStorage
+  // Function to load user from localStorage
+  const loadUser = () => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+    } else {
+      setUser(null);
     }
+  };
+
+  useEffect(() => {
+    // Load user on mount
+    loadUser();
+
+    // Listen for storage events (when localStorage changes in another tab)
+    const handleStorageChange = (e) => {
+      if (e.key === 'user') {
+        loadUser();
+      }
+    };
+
+    // Listen for custom login event (we'll dispatch this from Login page)
+    const handleLogin = () => {
+      loadUser();
+    };
+
+    // Listen for route changes (when navigating back to home)
+    const handleRouteChange = () => {
+      loadUser();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('login', handleLogin);
+    window.addEventListener('popstate', handleRouteChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('login', handleLogin);
+      window.removeEventListener('popstate', handleRouteChange);
+    };
   }, []);
 
   // Close dropdown when clicking outside
@@ -33,6 +67,9 @@ export default function ProfileDropdown() {
     localStorage.removeItem("user");
     setUser(null);
     setIsOpen(false);
+    
+    // Dispatch logout event
+    window.dispatchEvent(new Event('logout'));
     
     // Redirect to home page
     navigate("/");
@@ -60,12 +97,22 @@ export default function ProfileDropdown() {
     
     if (!user || !user.username) return colors[0];
     
-    // Simple hash function to pick a consistent color
     const hash = user.username.split("").reduce((acc, char) => {
       return acc + char.charCodeAt(0);
     }, 0);
     
     return colors[hash % colors.length];
+  };
+
+  // Get profile picture URL
+  const getProfilePicUrl = () => {
+    if (user?.profile_pic) {
+      if (user.profile_pic.startsWith('data:') || user.profile_pic.startsWith('http')) {
+        return user.profile_pic;
+      }
+      return `http://localhost:5000${user.profile_pic}`;
+    }
+    return null;
   };
 
   if (!user) {
@@ -81,17 +128,35 @@ export default function ProfileDropdown() {
     );
   }
 
+  const profilePicUrl = getProfilePicUrl();
+
   return (
     <div className="profile-dropdown" ref={dropdownRef}>
       <div 
         className="profile-trigger" 
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div 
-          className="profile-avatar"
-          style={{ backgroundColor: getAvatarColor() }}
-        >
-          {getInitials()}
+        <div className="profile-avatar-wrapper">
+          {profilePicUrl ? (
+            <img 
+              src={profilePicUrl} 
+              alt={user.username || "Profile"} 
+              className="profile-avatar-img"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentNode.querySelector('.profile-avatar-fallback').style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div 
+            className="profile-avatar-fallback"
+            style={{ 
+              backgroundColor: getAvatarColor(),
+              display: profilePicUrl ? 'none' : 'flex'
+            }}
+          >
+            {getInitials()}
+          </div>
         </div>
         <span className="profile-name">{user.username || user.email}</span>
         <svg 
@@ -114,11 +179,27 @@ export default function ProfileDropdown() {
       {isOpen && (
         <div className="dropdown-menu">
           <div className="dropdown-header">
-            <div 
-              className="dropdown-avatar"
-              style={{ backgroundColor: getAvatarColor() }}
-            >
-              {getInitials()}
+            <div className="dropdown-avatar-wrapper">
+              {profilePicUrl ? (
+                <img 
+                  src={profilePicUrl} 
+                  alt={user.username || "Profile"} 
+                  className="dropdown-avatar-img"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentNode.querySelector('.dropdown-avatar-fallback').style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div 
+                className="dropdown-avatar-fallback"
+                style={{ 
+                  backgroundColor: getAvatarColor(),
+                  display: profilePicUrl ? 'none' : 'flex'
+                }}
+              >
+                {getInitials()}
+              </div>
             </div>
             <div className="dropdown-user-info">
               <div className="dropdown-username">{user.username || "User"}</div>
@@ -131,8 +212,8 @@ export default function ProfileDropdown() {
 
           <Link to="/profile" className="dropdown-item" onClick={() => setIsOpen(false)}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" fill="currentColor"/>
-              <path d="M8 9C3.58172 9 0 12.5817 0 17H16C16 12.5817 12.4183 9 8 9Z" fill="currentColor"/>
+                <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" fill="currentColor"/>
+                <path d="M8 9C3.58172 9 0 12.5817 0 17H16C16 12.5817 12.4183 9 8 9Z" fill="currentColor"/>
             </svg>
             My Profile
           </Link>

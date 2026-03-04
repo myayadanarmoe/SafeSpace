@@ -2,13 +2,24 @@ import express from "express";
 import mysql from "mysql2";
 import bcrypt from "bcrypt";
 import cors from "cors";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 5000;
 
 // ===== Middleware =====
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"],
+  credentials: true
+}));
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ===== MySQL Connection =====
 const db = mysql.createConnection({
@@ -26,39 +37,82 @@ db.connect((err) => {
   console.log("✅ Connected to MySQL");
 });
 
+// ===== Create uploads directory if it doesn't exist =====
+if (!fs.existsSync('uploads')) {
+  fs.mkdirSync('uploads');
+  console.log("✅ Created uploads directory");
+}
+
+// ===== Multer Configuration for file uploads =====
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
 // ===== Test Route =====
 app.get("/", (req, res) => {
   res.send("Backend is running");
 });
 
-// ===== Signup Route =====
+// ===== Signup Route (Updated with username and email) =====
 app.post("/signup", async (req, res) => {
   console.log("🔥 SIGNUP HIT");
   console.log("BODY:", req.body);
 
-  const { username, password } = req.body;
+  const { username, email, password } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ message: "Missing fields" });
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
   }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const sql = "INSERT INTO users (email, password) VALUES (?, ?)";
+    const sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
 
-    db.query(sql, [username, hashedPassword], (err) => {
+    db.query(sql, [username, email, hashedPassword], (err, result) => {
       if (err) {
         console.error("❌ MySQL error:", err);
 
         if (err.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ message: "Username already exists" });
+          if (err.sqlMessage.includes("username")) {
+            return res.status(400).json({ message: "Username already exists" });
+          } else {
+            return res.status(400).json({ message: "Email already exists" });
+          }
         }
 
         return res.status(500).json({ message: "Database error" });
       }
 
-      res.status(201).json({ message: "User created successfully" });
+      // Return user data (excluding password)
+      const userId = result.insertId;
+      db.query("SELECT id, username, email, type, profile_pic, created_at FROM users WHERE id = ?", [userId], (err, userData) => {
+        if (err) {
+          return res.status(201).json({ message: "User created successfully" });
+        }
+        res.status(201).json({ 
+          message: "User created successfully",
+          user: userData[0]
+        });
+      });
     });
   } catch (error) {
     console.error("❌ Server error:", error);
@@ -66,7 +120,187 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-// ===== ADMIN ROUTES =====
+// ===== Login Route (Email only) =====
+app.post("/login", async (req, res) => {
+  console.log("🔐 LOGIN HIT");
+  console.log("BODY:", req.body);
+
+  const { email, password } = req.body; // Changed from username to email
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  try {
+    console.log("🔍 Searching for user with email:", email);
+    
+    // Find user by email only
+    const sql = "SELECT * FROM users WHERE email = ?";
+    
+    db.query(sql, [email], async (err, results) => {
+      if (err) {
+        console.error("❌ MySQL error:", err);
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      console.log(`📊 Found ${results.length} users`);
+
+      // Check if user exists
+      if (results.length === 0) {
+        console.log("❌ No user found with email:", email);
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      const user = results[0];
+      console.log("✅ User found:", { 
+        id: user.id, 
+        username: user.username, 
+        email: user.email,
+        type: user.type 
+      });
+
+      // Compare password
+      console.log("🔑 Comparing passwords...");
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      console.log("🔑 Password valid:", isPasswordValid);
+
+      if (!isPasswordValid) {
+        console.log("❌ Invalid password for email:", email);
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Login successful - return user info (excluding password)
+      const { password: _, ...userWithoutPassword } = user;
+      
+      console.log("✅ Login successful for:", email);
+      res.json({ 
+        message: "Login successful",
+        user: userWithoutPassword
+      });
+    });
+  } catch (error) {
+    console.error("❌ Server error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ===== Profile Update Route =====
+app.put("/api/user/update", upload.single('profilePic'), async (req, res) => {
+  console.log("👤 PROFILE UPDATE HIT");
+  console.log("BODY:", req.body);
+  console.log("FILE:", req.file);
+
+  const { userId, username, email, currentPassword, newPassword } = req.body;
+  const profilePic = req.file ? `/uploads/${req.file.filename}` : null;
+
+  if (!userId || !username || !email) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  try {
+    // First, get the current user data
+    db.query("SELECT * FROM users WHERE id = ?", [userId], async (err, results) => {
+      if (err) {
+        console.error("❌ MySQL error:", err);
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const user = results[0];
+
+      // If changing password, verify current password
+      if (newPassword) {
+        if (!currentPassword) {
+          return res.status(400).json({ message: "Current password is required to set new password" });
+        }
+
+        const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isPasswordValid) {
+          return res.status(401).json({ message: "Current password is incorrect" });
+        }
+      }
+
+      // Build update query
+      let updateSql = "UPDATE users SET username = ?, email = ?";
+      let updateParams = [username, email];
+
+      if (newPassword) {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        updateSql += ", password = ?";
+        updateParams.push(hashedPassword);
+      }
+
+      if (profilePic) {
+        updateSql += ", profile_pic = ?";
+        updateParams.push(profilePic);
+      }
+
+      updateSql += " WHERE id = ?";
+      updateParams.push(userId);
+
+      db.query(updateSql, updateParams, (err, result) => {
+        if (err) {
+          console.error("❌ MySQL error:", err);
+          
+          if (err.code === "ER_DUP_ENTRY") {
+            if (err.sqlMessage.includes("username")) {
+              return res.status(400).json({ message: "Username already exists" });
+            } else {
+              return res.status(400).json({ message: "Email already exists" });
+            }
+          }
+          
+          return res.status(500).json({ message: "Database error" });
+        }
+
+        // Get updated user data
+        db.query("SELECT id, username, email, type, profile_pic, created_at FROM users WHERE id = ?", [userId], (err, userData) => {
+          if (err) {
+            return res.json({ message: "Profile updated successfully" });
+          }
+          
+          res.json({ 
+            message: "Profile updated successfully",
+            user: userData[0]
+          });
+        });
+      });
+    });
+  } catch (error) {
+    console.error("❌ Server error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ===== Get Current User Route =====
+app.get("/api/user/:id", (req, res) => {
+  const { id } = req.params;
+  
+  const sql = "SELECT id, username, email, type, profile_pic, created_at FROM users WHERE id = ?";
+  
+  db.query(sql, [id], (err, results) => {
+    if (err) {
+      console.error("❌ MySQL error:", err);
+      return res.status(500).json({ message: "Database error" });
+    }
+    
+    if (results.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    res.json(results[0]);
+  });
+});
+
+// ===== Logout Route =====
+app.post("/logout", (req, res) => {
+  res.json({ message: "Logged out successfully" });
+});
+
+// ===== ADMIN ROUTES (Updated with username and profile_pic) =====
 
 // Get all users with pagination and search
 app.get("/api/admin/users", (req, res) => {
@@ -74,16 +308,16 @@ app.get("/api/admin/users", (req, res) => {
   const offset = (page - 1) * limit;
   
   let countQuery = "SELECT COUNT(*) as total FROM users";
-  let query = "SELECT id, email, type, created_at FROM users";
+  let query = "SELECT id, username, email, type, profile_pic, created_at FROM users";
   let queryParams = [];
   let countParams = [];
 
   if (search) {
     const searchPattern = `%${search}%`;
-    query += " WHERE email LIKE ? OR type LIKE ?";
-    countQuery += " WHERE email LIKE ? OR type LIKE ?";
-    queryParams = [searchPattern, searchPattern];
-    countParams = [searchPattern, searchPattern];
+    query += " WHERE username LIKE ? OR email LIKE ? OR type LIKE ?";
+    countQuery += " WHERE username LIKE ? OR email LIKE ? OR type LIKE ?";
+    queryParams = [searchPattern, searchPattern, searchPattern];
+    countParams = [searchPattern, searchPattern, searchPattern];
   }
 
   query += " ORDER BY id DESC LIMIT ? OFFSET ?";
@@ -115,11 +349,11 @@ app.get("/api/admin/users", (req, res) => {
   });
 });
 
-// Get single user by ID
+// Get single user by ID (admin)
 app.get("/api/admin/users/:id", (req, res) => {
   const { id } = req.params;
   
-  const sql = "SELECT id, email, type, created_at FROM users WHERE id = ?";
+  const sql = "SELECT id, username, email, type, profile_pic, created_at FROM users WHERE id = ?";
   
   db.query(sql, [id], (err, results) => {
     if (err) {
@@ -171,25 +405,29 @@ app.put("/api/admin/users/:id/role", (req, res) => {
   });
 });
 
-// Create new user (admin)
+// Create new user (admin) - Updated with username
 app.post("/api/admin/users", async (req, res) => {
-  const { email, password, type = 'Free User' } = req.body;
+  const { username, email, password, type = 'Free User' } = req.body;
   
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required" });
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "Username, email and password are required" });
   }
   
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    const sql = "INSERT INTO users (email, password, type) VALUES (?, ?, ?)";
+    const sql = "INSERT INTO users (username, email, password, type) VALUES (?, ?, ?, ?)";
     
-    db.query(sql, [email, hashedPassword, type], (err, result) => {
+    db.query(sql, [username, email, hashedPassword, type], (err, result) => {
       if (err) {
         console.error("❌ MySQL error:", err);
         
         if (err.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ message: "Email already exists" });
+          if (err.sqlMessage.includes("username")) {
+            return res.status(400).json({ message: "Username already exists" });
+          } else {
+            return res.status(400).json({ message: "Email already exists" });
+          }
         }
         
         return res.status(500).json({ message: "Database error" });
