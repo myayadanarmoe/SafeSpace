@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../SignUp.css";
+import "../styles/Signup.css";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,9 +15,9 @@ export default function Login() {
     setMessage("");
 
     try {
-      console.log("1. Attempting login with email:", email);
+      console.log("Attempting login with email:", email);
 
-      const res = await fetch("http://localhost:5000/login", {
+      const res = await fetch("http://localhost:5000/api/login", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -26,25 +26,20 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      console.log("2. Response status:", res.status);
-      console.log("3. Response headers:", [...res.headers.entries()]);
-
       const data = await res.json();
-      console.log("4. Response data:", data);
+      console.log("Login response:", data);
 
       if (res.ok) {
         setMessage("Login successful! Redirecting...");
         
         if (data.user) {
-
+          // FIX: Use "user" not "users"
+          localStorage.setItem("user", JSON.stringify(data.user));
+          
+          // Dispatch login event for navbar
           window.dispatchEvent(new Event('login'));
           
-          localStorage.setItem("user", JSON.stringify(data.user));
-          console.log("5. User data saved to localStorage:", data.user);
-          
-          // Verify it was saved
-          const saved = localStorage.getItem("user");
-          console.log("6. Verified saved data:", JSON.parse(saved));
+          console.log("User data saved:", data.user);
         }
         
         setEmail("");
@@ -55,14 +50,9 @@ export default function Login() {
         }, 2000);
       } else {
         setMessage(data.message || "Login failed");
-        console.log("7. Login failed with message:", data.message);
       }
     } catch (err) {
-      console.error("8. Login error details:", {
-        name: err.name,
-        message: err.message,
-        stack: err.stack
-      });
+      console.error("Login error:", err);
       setMessage("Network error - please check if server is running");
     } finally {
       setIsLoading(false);
@@ -133,27 +123,6 @@ export default function Login() {
           >
             Sign up here
           </a>
-        </div>
-
-        <div className="social">
-          <div>
-            <i className="fab fa-google"></i>
-            <img
-              className="icon"
-              src="https://images.icon-icons.com/2699/PNG/256/google_logo_icon_169090.png"
-              alt="Google"
-            />
-            Google
-          </div>
-          <div>
-            <i className="fab fa-facebook"></i>
-            <img
-              className="icon"
-              src="https://images.icon-icons.com/1488/PNG/256/5293-facebook_102565.png"
-              alt="Facebook"
-            />
-            Facebook
-          </div>
         </div>
       </form>
     </div>

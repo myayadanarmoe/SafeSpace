@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../ProfileDropdown.css";
+import "../styles/ProfileDropdown.css";
 
 export default function ProfileDropdown() {
   const [isOpen, setIsOpen] = useState(false);
