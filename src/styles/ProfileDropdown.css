@@ -218,6 +218,10 @@
   background-color: #4a5568;
 }
 
+.dark-mode .login-link{
+  color: white;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .profile-name {

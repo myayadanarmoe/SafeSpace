@@ -3,17 +3,61 @@ import db from "../config/db.js";
 
 const router = express.Router();
 
-// Get all clinicians (Psychiatrists, Psychologists, Therapists)
+// Get all clinicians with their details
 router.get("/clinicians", (req, res) => {
-  const sql = "SELECT id, username, email, type FROM users WHERE type IN ('Psychiatrist', 'Psychologist', 'Therapist') ORDER BY username";
+  const { search = '' } = req.query;
   
-  db.query(sql, (err, results) => {
+  let sql = `
+    SELECT 
+      u.id,
+      u.username,
+      u.email,
+      u.type,
+      u.profile_pic,
+      MAX(c.licenseNumber) as licenseNumber,
+      MAX(c.about) as about,
+      GROUP_CONCAT(DISTINCT d.diagnosisName) as diagnoses
+    FROM users u
+    INNER JOIN clinicians c ON u.id = c.userID
+    LEFT JOIN user_diagnosis ud ON u.id = ud.userID
+    LEFT JOIN diagnosis d ON ud.diagnosisID = d.diagnosisID
+    WHERE u.type IN ('Psychiatrist', 'Psychologist', 'Therapist')
+  `;
+  
+  const queryParams = [];
+  
+  if (search) {
+    sql += ` AND (u.username LIKE ? OR c.about LIKE ? OR d.diagnosisName LIKE ?)`;
+    const searchPattern = `%${search}%`;
+    queryParams.push(searchPattern, searchPattern, searchPattern);
+  }
+  
+  sql += ` GROUP BY u.id ORDER BY u.username`;
+  
+  console.log("Executing SQL:", sql);
+  console.log("With params:", queryParams);
+  
+  db.query(sql, queryParams, (err, results) => {
     if (err) {
       console.error("❌ MySQL error:", err);
-      return res.status(500).json({ message: "Database error" });
+      return res.status(500).json({ message: "Database error", error: err.message });
     }
     
-    res.json({ clinicians: results });
+    console.log("Query results:", results);
+    
+    // Parse diagnoses string to array
+    const clinicians = results.map(doc => ({
+      id: doc.id,
+      username: doc.username,
+      email: doc.email,
+      type: doc.type,
+      profile_pic: doc.profile_pic ? `http://localhost:5000${doc.profile_pic}` : null,
+      licenseNumber: doc.licenseNumber,
+      about: doc.about || "Experienced mental health professional dedicated to providing compassionate care.",
+      diagnoses: doc.diagnoses ? doc.diagnoses.split(',') : []
+    }));
+    
+    res.json(clinicians);
   });
 });
 
@@ -21,19 +65,40 @@ router.get("/clinicians", (req, res) => {
 router.get("/clinicians/:id", (req, res) => {
   const { id } = req.params;
   
-  const sql = "SELECT id, username, email, type FROM users WHERE id = ? AND type IN ('Psychiatrist', 'Psychologist', 'Therapist')";
+  const sql = `
+    SELECT 
+      u.id,
+      u.username,
+      u.email,
+      u.type,
+      u.profile_pic,
+      MAX(c.licenseNumber) as licenseNumber,
+      MAX(c.about) as about,
+      GROUP_CONCAT(DISTINCT d.diagnosisName) as diagnoses
+    FROM users u
+    INNER JOIN clinicians c ON u.id = c.userID
+    LEFT JOIN user_diagnosis ud ON u.id = ud.userID
+    LEFT JOIN diagnosis d ON ud.diagnosisID = d.diagnosisID
+    WHERE u.id = ? AND u.type IN ('Psychiatrist', 'Psychologist', 'Therapist')
+    GROUP BY u.id
+  `;
   
   db.query(sql, [id], (err, results) => {
     if (err) {
       console.error("❌ MySQL error:", err);
-      return res.status(500).json({ message: "Database error" });
+      return res.status(500).json({ message: "Database error", error: err.message });
     }
     
     if (results.length === 0) {
       return res.status(404).json({ message: "Clinician not found" });
     }
     
-    res.json(results[0]);
+    const clinician = results[0];
+    clinician.diagnoses = clinician.diagnoses ? clinician.diagnoses.split(',') : [];
+    clinician.profile_pic = clinician.profile_pic ? `http://localhost:5000${clinician.profile_pic}` : null;
+    clinician.about = clinician.about || "Experienced mental health professional dedicated to providing compassionate care.";
+    
+    res.json(clinician);
   });
 });
 

@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import TimeSlot from "./TimeSlot";
-import BookedSlotsTable from "./BookedSlotsTable";
-import ConfirmationModal from "./ConfirmationModal";
-import CancelModal from "./CancelModal";
+import "../styles/BookingPage.css";
 
 // Helper function to convert 24h time to 12h format
 const convertTo12Hour = (time24) => {
@@ -14,100 +11,83 @@ const convertTo12Hour = (time24) => {
   return `${hour12}:${minutes} ${ampm}`;
 };
 
-// Helper function to convert 12h time to 24h format
-const convertTo24Hour = (time12) => {
-  const [time, modifier] = time12.split(' ');
-  let [hours, minutes] = time.split(':').map(Number);
-  if (modifier === 'PM' && hours !== 12) hours += 12;
-  if (modifier === 'AM' && hours === 12) hours = 0;
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-};
-
-// Generate time slots from availability data
-const generateTimeSlots = (availabilitySlots, selectedDate) => {
-  if (!availabilitySlots || availabilitySlots.length === 0) return [];
-  
+// Generate 30-minute time slots from availability
+const generateTimeSlots = (startTime, endTime) => {
   const slots = [];
-  const dayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
   
-  // Find availability for this day
-  const dayAvailability = availabilitySlots.filter(slot => slot.day_of_the_week === dayOfWeek);
+  let currentHour = startHour;
+  let currentMin = startMin;
   
-  dayAvailability.forEach(availability => {
-    const startHour = parseInt(availability.startTime.split(':')[0]);
-    const endHour = parseInt(availability.endTime.split(':')[0]);
-    const startMinute = parseInt(availability.startTime.split(':')[1]);
-    const endMinute = parseInt(availability.endTime.split(':')[1]);
+  while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
+    const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`;
+    slots.push(timeStr); // Store in 24h format for comparison
     
-    // Generate 30-minute slots
-    for (let hour = startHour; hour <= endHour; hour++) {
-      for (let minute of [0, 30]) {
-        if (hour === endHour && minute >= endMinute) continue;
-        if (hour === startHour && minute < startMinute) continue;
-        
-        const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        slots.push(convertTo12Hour(time24));
-      }
+    // Add 30 minutes
+    currentMin += 30;
+    if (currentMin >= 60) {
+      currentHour += 1;
+      currentMin = 0;
     }
-  });
+  }
   
   return slots;
 };
 
-const doctors = [
-  { id: 1, name: "Dr. Alice Smith", clinicianId: 1 },
-  { id: 2, name: "Dr. Bob Jones", clinicianId: 2 },
-  { id: 3, name: "Dr. Carol Tan", clinicianId: 3 },
-];
-
 export default function BookingPage() {
   const { doctorId } = useParams();
   const navigate = useNavigate();
-  const doctor = doctors.find((d) => d.id === parseInt(doctorId));
-
-  const [bookings, setBookings] = useState(() =>
-    JSON.parse(localStorage.getItem("bookings")) || {}
-  );
+  const [doctor, setDoctor] = useState(null);
   const [availability, setAvailability] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [bookedSlots, setBookedSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showCancel, setShowCancel] = useState(false);
-  const [timeSlots, setTimeSlots] = useState([]);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [bookingMessage, setBookingMessage] = useState({ text: "", type: "" });
 
-  // Today's date
+  // Get today's date for min date input
   const today = new Date();
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, "0");
   const dd = String(today.getDate()).padStart(2, "0");
   const minDate = `${yyyy}-${mm}-${dd}`;
 
-  // Fetch availability when doctor loads
   useEffect(() => {
-    if (doctor) {
-      fetchAvailability();
+    // Check if user is logged in
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      navigate("/login");
+      return;
     }
-  }, [doctor]);
+    setUser(JSON.parse(storedUser));
+    
+    fetchDoctorDetails();
+    fetchAvailability();
+  }, [doctorId]);
 
-  // Generate time slots when date or availability changes
   useEffect(() => {
     if (selectedDate && availability.length > 0) {
-      const slots = generateTimeSlots(availability, selectedDate);
-      setTimeSlots(slots);
-    } else {
-      setTimeSlots([]);
+      updateAvailableSlots();
+      fetchBookedSlots();
     }
   }, [selectedDate, availability]);
 
-  useEffect(() => {
-    localStorage.setItem("bookings", JSON.stringify(bookings));
-  }, [bookings]);
+  const fetchDoctorDetails = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/clinicians/${doctorId}`);
+      const data = await res.json();
+      setDoctor(data);
+    } catch (err) {
+      console.error("Error fetching doctor:", err);
+    }
+  };
 
   const fetchAvailability = async () => {
-    setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/availability/${doctor.clinicianId}`);
+      const res = await fetch(`http://localhost:5000/api/availability/${doctorId}`);
       const data = await res.json();
       setAvailability(data.availability || []);
     } catch (err) {
@@ -117,119 +97,201 @@ export default function BookingPage() {
     }
   };
 
-  const handleSelectSlot = (slot) => {
-    if (!selectedDate) return alert("Please select a date first.");
+  const fetchBookedSlots = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/appointments/check?clinicianId=${doctorId}&date=${selectedDate}`
+      );
+      const data = await res.json();
+      setBookedSlots(data || []);
+    } catch (err) {
+      console.error("Error fetching booked slots:", err);
+    }
+  };
 
-    if (selectedDate === minDate) {
-      const now = new Date();
-      const [slotH, slotM] = convertTo24Hour(slot).split(":").map(Number);
-      if (slotH < now.getHours() || (slotH === now.getHours() && slotM <= now.getMinutes())) {
-        return alert("You cannot select a past time slot for today!");
-      }
+  const updateAvailableSlots = () => {
+    const selectedDay = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
+    
+    // Get availability for the selected day
+    const dayAvailability = availability.filter(slot => slot.day_of_the_week === selectedDay);
+    
+    if (dayAvailability.length === 0) {
+      setAvailableSlots([]);
+      return;
     }
 
-    setSelectedSlot(slot);
-    setShowConfirm(true);
+    // Generate all possible slots
+    let allSlots = [];
+    dayAvailability.forEach(slot => {
+      const slots = generateTimeSlots(slot.startTime, slot.endTime);
+      allSlots = [...allSlots, ...slots];
+    });
+
+    // Remove duplicates
+    allSlots = [...new Set(allSlots)];
+    
+    setAvailableSlots(allSlots);
   };
 
-  const handleConfirmBooking = () => {
-    const updatedBookings = { ...bookings };
-    if (!updatedBookings[doctor.id]) updatedBookings[doctor.id] = {};
-    if (!updatedBookings[doctor.id][selectedDate]) updatedBookings[doctor.id][selectedDate] = [];
-    updatedBookings[doctor.id][selectedDate].push(selectedSlot);
-    setBookings(updatedBookings);
-    setShowConfirm(false);
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
     setSelectedSlot(null);
   };
 
-  const handleCancelBooking = (slot) => {
+  const handleSlotSelect = (slot) => {
     setSelectedSlot(slot);
-    setShowCancel(true);
   };
 
-  const confirmCancel = () => {
-    const updatedBookings = { ...bookings };
-    updatedBookings[doctor.id][selectedDate] = updatedBookings[doctor.id][selectedDate].filter(
-      (s) => s !== selectedSlot
+  const handleBooking = async () => {
+    if (!selectedSlot || !user) return;
+
+    try {
+      const res = await fetch("http://localhost:5000/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patientId: user.id,
+          clinicianId: parseInt(doctorId),
+          date: selectedDate,
+          time: selectedSlot,
+          type: 'online'
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setBookingMessage({ text: "Appointment booked successfully!", type: "success" });
+        setSelectedSlot(null);
+        fetchBookedSlots(); // Refresh booked slots
+        setTimeout(() => setBookingMessage({ text: "", type: "" }), 3000);
+      } else {
+        setBookingMessage({ text: data.message || "Booking failed", type: "error" });
+        setTimeout(() => setBookingMessage({ text: "", type: "" }), 3000);
+      }
+    } catch (err) {
+      setBookingMessage({ text: "Network error", type: "error" });
+      setTimeout(() => setBookingMessage({ text: "", type: "" }), 3000);
+    }
+  };
+
+  const isSlotBooked = (slot) => {
+    return bookedSlots.includes(slot);
+  };
+
+  if (loading) {
+    return (
+      <div className="booking-container">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading availability...</p>
+        </div>
+      </div>
     );
-    setBookings(updatedBookings);
-    setShowCancel(false);
-    setSelectedSlot(null);
-  };
+  }
 
-  const isSlotPast = (slot) => {
-    const now = new Date();
-    const [hours, minutes] = convertTo24Hour(slot).split(":").map(Number);
-    return hours < now.getHours() || (hours === now.getHours() && minutes <= now.getMinutes());
-  };
-
-  if (!doctor) return <p>Doctor not found!</p>;
+  if (!doctor) {
+    return (
+      <div className="booking-container">
+        <p>Doctor not found</p>
+        <button onClick={() => navigate('/online-therapy')} className="back-button">
+          ← Back to Doctors
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ maxWidth: "600px", margin: "50px auto" }}>
-      <h1>Booking for {doctor.name}</h1>
-      <button
-        onClick={() => navigate("/online-therapy")}
-        style={{ marginBottom: "20px" }}
-      >
-        ← Back to Doctor Selection
-      </button>
-
-      <div style={{ marginBottom: "20px" }}>
-        <label>Select a Date:</label>
-        <input
-          type="date"
-          value={selectedDate}
-          min={minDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-        />
+    <div className="booking-container">
+      <div className="booking-header">
+        <button onClick={() => navigate('/online-therapy')} className="back-button">
+          ← Back to Doctors
+        </button>
+        <h1>Book Appointment with {doctor.username}</h1>
       </div>
 
-      {loading && <p>Loading availability...</p>}
-
-      {selectedDate && !loading && (
-        <>
-          {timeSlots.length > 0 ? (
-            <div style={{ display: "flex", flexWrap: "wrap", marginTop: "20px" }}>
-              {timeSlots.map((slot) => {
-                const isBooked = bookings[doctor.id]?.[selectedDate]?.includes(slot);
-                return (
-                  <TimeSlot
-                    key={slot}
-                    slot={slot}
-                    isBooked={isBooked}
-                    isPast={selectedDate === minDate && isSlotPast(slot)}
-                    onSelect={handleSelectSlot}
-                    onCancel={handleCancelBooking}
-                  />
-                );
-              })}
+      <div className="booking-content">
+        {/* Doctor Info Card */}
+        <div className="doctor-info-card">
+          <img 
+            src={doctor.profile_pic || "https://via.placeholder.com/300x200?text=Doctor"} 
+            alt={doctor.username}
+            className="doctor-info-image"
+          />
+          <div className="doctor-info-details">
+            <h2>{doctor.username}</h2>
+            <span className="doctor-info-specialty">{doctor.type}</span>
+            <p className="doctor-info-about">{doctor.about}</p>
+            <div className="doctor-info-diagnoses">
+              {doctor.diagnoses && doctor.diagnoses.map((diag, idx) => (
+                <span key={idx} className="diagnosis-badge">{diag}</span>
+              ))}
             </div>
-          ) : (
-            <p>No availability for this day. Please select another date.</p>
+          </div>
+        </div>
+
+        {/* Booking Section */}
+        <div className="booking-section">
+          <h2>Select Date & Time</h2>
+
+          {bookingMessage.text && (
+            <div className={`booking-message ${bookingMessage.type}`}>
+              {bookingMessage.text}
+            </div>
           )}
-        </>
-      )}
 
-      <BookedSlotsTable bookings={bookings[doctor.id] || {}} />
+          <div className="date-selector">
+            <label>Select Date:</label>
+            <input
+              type="date"
+              value={selectedDate}
+              min={minDate}
+              onChange={handleDateChange}
+              className="date-input"
+            />
+          </div>
 
-      {showConfirm && (
-        <ConfirmationModal
-          slot={selectedSlot}
-          date={selectedDate}
-          onConfirm={handleConfirmBooking}
-          onCancel={() => setShowConfirm(false)}
-        />
-      )}
+          {selectedDate && (
+            <>
+              {availableSlots.length > 0 ? (
+                <div className="slots-container">
+                  <h3>Available Time Slots</h3>
+                  <div className="slots-grid">
+                    {availableSlots.map((slot, index) => {
+                      const slot12h = convertTo12Hour(slot);
+                      const isBooked = isSlotBooked(slot);
+                      return (
+                        <button
+                          key={index}
+                          className={`slot-button ${selectedSlot === slot ? 'selected' : ''} ${isBooked ? 'booked' : ''}`}
+                          onClick={() => !isBooked && handleSlotSelect(slot)}
+                          disabled={isBooked}
+                        >
+                          {slot12h}
+                          {isBooked && <span className="booked-label">Booked</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
 
-      {showCancel && (
-        <CancelModal
-          slot={selectedSlot}
-          date={selectedDate}
-          onConfirm={confirmCancel}
-          onCancel={() => setShowCancel(false)}
-        />
-      )}
+                  {selectedSlot && (
+                    <div className="booking-confirm">
+                      <p>
+                        Confirm booking for {new Date(selectedDate).toLocaleDateString()} at {convertTo12Hour(selectedSlot)}
+                      </p>
+                      <button onClick={handleBooking} className="confirm-button">
+                        Confirm Booking
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="no-slots">No available slots for this date. Please select another date.</p>
+              )}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

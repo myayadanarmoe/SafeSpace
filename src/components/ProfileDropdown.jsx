@@ -209,6 +209,17 @@ export default function ProfileDropdown() {
             My Profile
           </Link>
 
+          {/* My Appointments - Show for all regular users (not clinicians, not admin) */}
+          {!isProfessional && user.type !== 'Admin' && user.type !== 'Staff' && (
+            <Link to="/my-appointments" className="dropdown-item" onClick={() => setIsOpen(false)}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 0C3.58 0 0 3.58 0 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" fill="currentColor"/>
+                <path d="M9 4H7v5h5V7H9V4z" fill="currentColor"/>
+              </svg>
+              My Appointments
+            </Link>
+          )}
+
           {/* Mental Health Professional Menu Items */}
           {isProfessional && (
             <>
@@ -238,6 +249,7 @@ export default function ProfileDropdown() {
             </>
           )}
 
+          {/* Admin Panel - Only for Admin */}
           {user.type === 'Admin' && (
             <Link to="/admin" className="dropdown-item" onClick={() => setIsOpen(false)}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

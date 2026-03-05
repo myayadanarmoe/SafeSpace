@@ -8,6 +8,9 @@ import Login from "./components/Login";
 import AdminPage from "./components/AdminPage";
 import ProfilePage from "./components/ProfilePage"; // Add this import
 import Availability from "./components/Availabilty";
+import MyAppointments from "./components/MyAppointments";
+import OfflineTherapy from "./components/OfflineTherapy";
+import Subscription from "./components/Subscription";
 
 function App() {
   return (
@@ -22,6 +25,9 @@ function App() {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/availability" element={<Availability />} /> 
+        <Route path="/my-appointments" element={<MyAppointments />} />
+        <Route path="/offline-therapy" element={<OfflineTherapy />} />
+        <Route path="/subscription" element={<Subscription />} />
       </Routes>
     </Router>
   );

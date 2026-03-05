@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import ProfileDropdown from "./ProfileDropdown";
+// Import your logo
+import logo from "../assets/safe_space_logo.png"; // Add this import
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -115,7 +117,8 @@ export default function Navbar() {
     <nav className={`navbar ${scrolled ? 'scrolled' : ''} ${darkMode ? 'dark' : ''}`}>
       <div className="navbar-container">
         <Link to="/" className="navbar-logo" onClick={() => setOpen(false)}>
-          SafeSpace
+          {/* Add logo image before the text */}
+          <img src={logo} alt="SafeSpace Logo" className="navbar-logo-img" />
         </Link>
 
         <ul className={`navbar-menu ${open ? "active" : ""}`}>

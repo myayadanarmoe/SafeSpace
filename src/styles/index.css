@@ -24,43 +24,160 @@ body.dark-mode {
     color: #e0edff;
 }
 
+/* Headings - Enhanced */
+h1, h2 {
+    text-align: center;
+    padding-bottom: 25px;
+    padding-top: 30px;
+    color: #0f4b7a;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    position: relative;
+}
+
+h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(15, 75, 122, 0.1);
+    animation: fadeInDown 0.8s ease-out;
+}
+
+h2 {
+    font-size: 2.2rem;
+    margin: 20px 0;
+}
+
+h2::after {
+    content: '';
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #0f4b7a, transparent);
+    border-radius: 3px;
+}
+
+body.dark-mode h1,
+body.dark-mode h2 {
+    color: #b8d6ff;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode h2::after {
+    background: linear-gradient(90deg, transparent, #b8d6ff, transparent);
+}
+
+/* Text - Enhanced */
 p {
-    line-height: 1.5;
+    line-height: 1.8;
     padding-left: 50px;
     padding-right: 50px;
     color: #1f3a5f;
+    font-size: 1.1rem;
+    max-width: 800px;
+    margin: 0 auto 25px;
+    animation: fadeIn 1s ease-out;
 }
 
 body.dark-mode p {
     color: #e0edff;
 }
 
+/* Icons */
 .icon {
     height: 30px;
     width: auto;
+    transition: transform 0.3s ease;
 }
 
-h1, h2 {
-    text-align: center;
-    padding-bottom: 20px;
-    padding-top: 20px;
-    color: #0f4b7a;
+.icon:hover {
+    transform: scale(1.1);
 }
 
-body.dark-mode h1,
-body.dark-mode h2 {
-    color: #b8d6ff;
+/* Images - Enhanced */
+img {
+    display: block;
+    margin: 40px auto;
+    width: 70%;
+    max-width: 800px;
+    border-radius: 20px;
+    box-shadow: 0 15px 30px rgba(15, 75, 122, 0.2);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    animation: fadeInUp 0.8s ease-out;
 }
 
+img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 20px 40px rgba(15, 75, 122, 0.3);
+}
+
+body.dark-mode img {
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode img:hover {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Content container */
 .content {
-    margin: 0%;
+    margin: 0;
+    padding: 20px 20px 60px;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(180, 210, 255, 0.3));
+    position: relative;
+    z-index: 1;
 }
 
 body.dark-mode .content {
     background: linear-gradient(135deg, rgba(15, 30, 50, 0.5), rgba(20, 40, 70, 0.3));
 }
 
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Selection styling */
+::selection {
+    background: #667eea;
+    color: white;
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ========== YOUR EXISTING NAVBAR STYLES - COMPLETELY UNTOUCHED ========== */
 /* Modern Glass Navbar */
 .navbar {
     display: flex;
@@ -279,18 +396,6 @@ body.dark-mode .content {
 
 .navbar.dark .bar {
     background: #b8d6ff;
-}
-
-img {
-    display: block;
-    margin: 0 auto;
-    width: 70%;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(20, 70, 130, 0.15);
-}
-
-body.dark-mode img {
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
 /* Desktop Large */
@@ -670,5 +775,41 @@ body.dark-mode img {
     
     .navbar-container .navbar-menu li a {
         padding: 8px 14px;
+    }
+}
+
+/* Logo */
+.navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    border: none;
+    outline: none;
+}
+
+.navbar-logo-img {
+    height: 150px;
+    width: auto;
+    display: block;
+    border: none;
+    outline: none;
+    box-shadow: none;
+}
+
+/* Remove any focus/hover borders */
+.navbar-logo:focus,
+.navbar-logo:hover,
+.navbar-logo-img:focus,
+.navbar-logo-img:hover {
+    border: none;
+    outline: none;
+    box-shadow: none;
+}
+
+/* Responsive Logo */
+@media (max-width: 768px) {
+    .navbar-logo-img {
+        height: 32px;
     }
 }
