@@ -70,6 +70,11 @@ export default function ProfileDropdown() {
     return professionalTypes.includes(user.type);
   };
 
+  // Check if user is staff
+  const isStaff = () => {
+    return user?.type === 'Staff';
+  };
+
   // Get initials for avatar
   const getInitials = () => {
     if (!user) return "?";
@@ -120,6 +125,7 @@ export default function ProfileDropdown() {
 
   const profilePicUrl = getProfilePicUrl();
   const isProfessional = isMentalHealthProfessional();
+  const isStaffUser = isStaff();
 
   return (
     <div className="profile-dropdown" ref={dropdownRef}>
@@ -195,12 +201,13 @@ export default function ProfileDropdown() {
             <div className="dropdown-user-info">
               <div className="dropdown-username">{user.username || "User"}</div>
               <div className="dropdown-email">{user.email}</div>
-              <div className="dropdown-role">{user.type || "Free User"}</div>
+              <div className="dropdown-role">{user.type || "Standard User"}</div>
             </div>
           </div>
 
           <div className="dropdown-divider"></div>
 
+          {/* My Profile - Everyone */}
           <Link to="/profile" className="dropdown-item" onClick={() => setIsOpen(false)}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" fill="currentColor"/>
@@ -209,8 +216,46 @@ export default function ProfileDropdown() {
             My Profile
           </Link>
 
-          {/* My Appointments - Show for all regular users (not clinicians, not admin) */}
-          {!isProfessional && user.type !== 'Admin' && user.type !== 'Staff' && (
+          {/* STAFF MENU ITEMS */}
+          {isStaffUser && (
+            <>
+
+              <Link to="/staff/book-appointment" className="dropdown-item" onClick={() => setIsOpen(false)}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M8 4V8L10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Book Appointment
+              </Link>
+
+              <Link to="/staff/patients" className="dropdown-item" onClick={() => setIsOpen(false)}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" fill="currentColor"/>
+                  <path d="M12 9C13.6569 9 15 10.3431 15 12V13H13V12C13 11.4477 12.5523 11 12 11V9Z" fill="currentColor"/>
+                  <path d="M4 9C2.34315 9 1 10.3431 1 12V13H3V12C3 11.4477 3.44772 11 4 11V9Z" fill="currentColor"/>
+                  <path d="M8 9C9.65685 9 11 10.3431 11 12V13H5V12C5 10.3431 6.34315 9 8 9Z" fill="currentColor"/>
+                </svg>
+                Manage Patients
+              </Link>
+
+              <Link to="/staff/schedule" className="dropdown-item" onClick={() => setIsOpen(false)}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="4" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M5 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M11 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="5" cy="9" r="1" fill="currentColor"/>
+                  <circle cx="8" cy="9" r="1" fill="currentColor"/>
+                  <circle cx="11" cy="9" r="1" fill="currentColor"/>
+                </svg>
+                View Schedule
+              </Link>
+
+              <div className="dropdown-divider"></div>
+            </>
+          )}
+
+          {/* My Appointments - Show for regular users (not clinicians, not admin, not staff) */}
+          {!isProfessional && !isStaffUser && user.type !== 'Admin' && (
             <Link to="/my-appointments" className="dropdown-item" onClick={() => setIsOpen(false)}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M8 0C3.58 0 0 3.58 0 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" fill="currentColor"/>

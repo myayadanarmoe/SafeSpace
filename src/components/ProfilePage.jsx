@@ -196,7 +196,7 @@ export default function ProfilePage() {
           <div className="user-info-card">
             <h3>Account Info</h3>
             <p><strong>Member since:</strong> {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</p>
-            <p><strong>User type:</strong> <span className={`role-badge ${user?.type?.toLowerCase().replace(' ', '-')}`}>{user?.type || 'Free User'}</span></p>
+            <p><strong>User type:</strong> <span className={`role-badge ${user?.type?.toLowerCase().replace(' ', '-')}`}>{user?.type || 'Standard User'}</span></p>
           </div>
         </div>
 

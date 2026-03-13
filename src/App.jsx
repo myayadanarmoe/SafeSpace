@@ -11,6 +11,11 @@ import Availability from "./components/Availabilty";
 import MyAppointments from "./components/MyAppointments";
 import OfflineTherapy from "./components/OfflineTherapy";
 import Subscription from "./components/Subscription";
+import MyPatients from "./components/MyPatients";
+import StaffBooking from "./components/StaffBooking";
+import StaffSchedule from "./components/StaffSchedule";
+import StaffPatients from "./components/StaffPatients";
+import Settings from "./components/Settings";
 
 function App() {
   return (
@@ -28,6 +33,11 @@ function App() {
         <Route path="/my-appointments" element={<MyAppointments />} />
         <Route path="/offline-therapy" element={<OfflineTherapy />} />
         <Route path="/subscription" element={<Subscription />} />
+        <Route path="/my-patients" element={<MyPatients />} />
+        <Route path="/staff/book-appointment" element={<StaffBooking />} />
+        <Route path="/staff/schedule" element={<StaffSchedule />} />
+        <Route path="/staff/patients" element={<StaffPatients />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </Router>
   );

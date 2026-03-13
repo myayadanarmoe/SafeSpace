@@ -2,7 +2,7 @@ export default function Page(){
     return(
     <main className="content">
         <h1>A Safe Space for Mental Health Care</h1>
-        <img src="https://i.pinimg.com/736x/68/ab/33/68ab330779b915a29c77142b549881d7.jpg" alt="cover photo" /> <br />
+        <img className="page-image" src="https://i.pinimg.com/736x/3e/d9/92/3ed9928089f3fdd6d9343bffd4fc8ec1.jpg" alt="cover photo" /> <br />
 
         {/* About Section */}
         <h2>About</h2> <br />

@@ -37,7 +37,7 @@ export default function AdminPage() {
     username: "",
     email: "",
     password: "",
-    type: "Free User",
+    type: "Standard User",
     licenseNumber: "",
     about: "",
     diagnosisIds: []
@@ -139,7 +139,7 @@ export default function AdminPage() {
     setEditForm({
       username: user.username || '',
       email: user.email || '',
-      role: user.type || 'Free User',
+      role: user.type || 'Standard User',
       licenseNumber: user.licenseNumber || '',
       about: user.about || '',
       diagnosisIds: user.diagnosisIds || []
@@ -196,7 +196,7 @@ export default function AdminPage() {
           username: "",
           email: "",
           password: "",
-          type: "Free User",
+          type: "Standard User",
           licenseNumber: "",
           about: "",
           diagnosisIds: []
@@ -238,7 +238,7 @@ export default function AdminPage() {
       'Admin': 'badge-admin',
       'Staff': 'badge-staff',
       'Premium User': 'badge-premium',
-      'Free User': 'badge-free',
+      'Standard User': 'badge-standard',
       'Youth User': 'badge-youth',
       'Psychiatrist': 'badge-psychiatrist',
       'Psychologist': 'badge-psychologist',

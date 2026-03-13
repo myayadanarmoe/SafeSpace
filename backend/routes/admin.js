@@ -422,7 +422,7 @@ router.delete("/admin/users/:id", (req, res) => {
 // Get all available user types
 router.get("/admin/user-types", (req, res) => {
   const types = [
-    'Free User',
+    'Standard User',
     'Premium User',
     'Youth User',
     'Staff',
