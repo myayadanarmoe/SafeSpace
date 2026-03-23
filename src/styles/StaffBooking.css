@@ -1,3 +1,6 @@
+@import './variables.css';
+@import './utilities.css';
+
 .staff-booking-container {
   max-width: 1200px;
   margin: 40px auto;
@@ -15,9 +18,9 @@
 
 .staff-booking-header h1 {
   font-size: 2rem;
-  color: #333;
+  color: var(--text-primary);
   margin: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -25,55 +28,11 @@
 }
 
 .staff-info {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.95rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, var(--bg-light) 0%, #e9ecef 100%);
   padding: 8px 16px;
   border-radius: 30px;
-}
-
-.back-button {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.back-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
-}
-
-.message {
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  animation: slideIn 0.3s ease;
-}
-
-.message.success {
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-  color: #155724;
-}
-
-.message.error {
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-  color: #721c24;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 
 .booking-grid {
@@ -85,15 +44,15 @@
 /* Patient Selection Panel */
 .patient-selection-panel,
 .appointment-panel {
-  background: white;
-  border-radius: 16px;
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
   padding: 25px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 .patient-selection-panel h2,
 .appointment-panel h2 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 20px;
   font-size: 1.3rem;
 }
@@ -113,24 +72,24 @@
 .search-box input {
   flex: 1;
   padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
   font-size: 1rem;
   transition: all 0.3s;
 }
 
 .search-box input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--border-focus);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .search-box button {
   padding: 12px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: transform 0.3s, box-shadow 0.3s;
   white-space: nowrap;
@@ -143,10 +102,10 @@
 
 .new-patient-btn {
   padding: 12px 20px;
-  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+  background: var(--success-gradient);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: transform 0.3s, box-shadow 0.3s;
   white-space: nowrap;
@@ -165,7 +124,7 @@
 }
 
 .search-results h3 {
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 10px;
   font-size: 0.9rem;
   text-transform: uppercase;
@@ -177,21 +136,21 @@
   gap: 15px;
   padding: 12px;
   border: 2px solid transparent;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   margin-bottom: 8px;
   cursor: pointer;
   transition: all 0.3s;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, var(--bg-light) 0%, #e9ecef 100%);
 }
 
 .patient-card:hover {
   transform: translateY(-2px);
-  border-color: #667eea;
+  border-color: var(--border-focus);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
 }
 
 .patient-card.selected {
-  border-color: #667eea;
+  border-color: var(--border-focus);
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
 }
 
@@ -199,13 +158,14 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
   font-weight: bold;
+  flex-shrink: 0;
 }
 
 .patient-avatar.large {
@@ -220,33 +180,45 @@
 
 .patient-info h4 {
   margin: 0 0 4px 0;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .patient-info p {
   margin: 0 0 4px 0;
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 .patient-type {
   display: inline-block;
   padding: 2px 8px;
-  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  background: var(--secondary-gradient);
   color: white;
   border-radius: 12px;
   font-size: 0.75rem;
+}
+
+/* Patient Type Badge */
+.patient-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--primary-gradient);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin: 5px 0;
 }
 
 /* Selected Patient */
 .selected-patient {
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 2px solid #f0f0f0;
+  border-top: 2px solid var(--border-light);
 }
 
 .selected-patient h3 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 15px;
 }
 
@@ -256,25 +228,29 @@
   gap: 20px;
   padding: 15px;
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
+}
+
+.patient-details {
+  flex: 1;
 }
 
 .patient-details h4 {
   margin: 0 0 5px 0;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .patient-details p {
-  margin: 0 0 10px 0;
-  color: #666;
+  margin: 5px 0;
+  color: var(--text-secondary);
 }
 
 .change-patient-btn {
   padding: 6px 12px;
-  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  background: var(--secondary-gradient);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: transform 0.3s;
 }
@@ -284,34 +260,6 @@
 }
 
 /* Appointment Panel */
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #495057;
-}
-
-.form-group select,
-.form-group input {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.3s;
-}
-
-.form-group select:focus,
-.form-group input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
 .appointment-type-group {
   display: flex;
   gap: 20px;
@@ -329,21 +277,13 @@
   margin: 0;
 }
 
-.date-input {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-
 /* Time Slots */
 .slots-section {
   margin-top: 20px;
 }
 
 .slots-section h3 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 15px;
 }
 
@@ -359,22 +299,22 @@
 
 .slot-btn {
   padding: 10px;
-  background: white;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  background: var(--bg-white);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .slot-btn:hover {
-  border-color: #667eea;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: var(--border-focus);
+  background: var(--primary-gradient);
   color: white;
 }
 
 .slot-btn.selected {
-  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+  background: var(--success-gradient);
   border-color: #28a745;
   color: white;
 }
@@ -382,20 +322,50 @@
 .no-slots {
   text-align: center;
   padding: 30px;
-  color: #999;
+  color: var(--text-muted);
   font-style: italic;
+}
+
+/* Room Select */
+.room-select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.room-select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Info Message */
+.info-message {
+  margin: 15px 0;
+  padding: 12px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: var(--radius-lg);
+  color: #1976d2;
+  font-size: 0.95rem;
+}
+
+.info-message p {
+  margin: 0;
 }
 
 /* Booking Summary */
 .booking-summary {
   margin-top: 30px;
   padding: 20px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
+  background: linear-gradient(135deg, var(--bg-light) 0%, #e9ecef 100%);
+  border-radius: var(--radius-xl);
 }
 
 .booking-summary h3 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 15px;
 }
 
@@ -405,184 +375,25 @@
 
 .summary-details p {
   margin: 8px 0;
-  color: #495057;
+  color: var(--text-light);
 }
 
 .book-btn {
   width: 100%;
   padding: 15px;
-  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+  background: var(--success-gradient);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.book-btn:hover {
+.book-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-}
-
-/* Modal */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
-  backdrop-filter: blur(5px);
-  padding: 20px;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: slideUp 0.3s ease;
-  position: relative;
-  padding: 30px;
-}
-
-.modal-content h2 {
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.close-modal {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: white;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  color: #666;
-  transition: all 0.3s;
-}
-
-.close-modal:hover {
-  background: #f8f9fa;
-  color: #333;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 15px;
-  margin-top: 30px;
-}
-
-.submit-btn {
-  flex: 2;
-  padding: 12px;
-  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.cancel-btn {
-  flex: 1;
-  padding: 12px;
-  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.submit-btn:hover,
-.cancel-btn:hover {
-  transform: translateY(-2px);
-}
-
-/* Add these styles for the patient type badge */
-.patient-type-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin: 5px 0;
-}
-
-/* Update the selected patient card */
-.selected-patient-card {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 15px;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  border-radius: 12px;
-}
-
-.patient-details {
-  flex: 1;
-}
-
-.patient-details h4 {
-  margin: 0 0 5px 0;
-  color: #333;
-}
-
-.patient-details p {
-  margin: 5px 0;
-  color: #666;
-}
-
-/* Add these styles */
-.room-select {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.3s;
-}
-
-.room-select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.info-message {
-  margin: 15px 0;
-  padding: 12px;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  border-radius: 8px;
-  color: #1976d2;
-  font-size: 0.95rem;
-}
-
-.info-message p {
-  margin: 0;
 }
 
 .book-btn:disabled {
@@ -597,30 +408,35 @@
 
 /* Dark mode support */
 .dark-mode .info-message {
-  background: #4a5568;
-  color: #e2e8f0;
+  background: var(--bg-light);
+  color: var(--text-light);
 }
 
-/* Dark mode support */
 .dark-mode .patient-selection-panel,
 .dark-mode .appointment-panel,
 .dark-mode .modal-content {
-  background: #2d3748;
+  background: var(--bg-dark);
 }
 
-.dark-mode h2,
-.dark-mode h3,
-.dark-mode label {
-  color: #e2e8f0;
+.dark-mode .patient-selection-panel h2,
+.dark-mode .appointment-panel h2,
+.dark-mode .slots-section h3,
+.dark-mode .booking-summary h3,
+.dark-mode .selected-patient h3 {
+  color: var(--text-light);
+}
+
+.dark-mode .form-group label {
+  color: var(--text-light);
 }
 
 .dark-mode .patient-card {
-  background: #4a5568;
+  background: var(--bg-light);
 }
 
 .dark-mode .patient-info h4,
 .dark-mode .patient-info p {
-  color: #e2e8f0;
+  color: var(--text-light);
 }
 
 .dark-mode .selected-patient-card {
@@ -629,24 +445,29 @@
 
 .dark-mode .form-group select,
 .dark-mode .form-group input,
-.dark-mode .date-input {
-  background: #4a5568;
-  border-color: #4a5568;
-  color: #e2e8f0;
+.dark-mode .date-input,
+.dark-mode .room-select {
+  background: var(--bg-dark);
+  border-color: var(--border-light);
+  color: var(--text-light);
 }
 
 .dark-mode .slot-btn {
-  background: #4a5568;
-  border-color: #4a5568;
-  color: #e2e8f0;
+  background: var(--bg-dark);
+  border-color: var(--border-light);
+  color: var(--text-light);
 }
 
 .dark-mode .booking-summary {
-  background: #4a5568;
+  background: var(--bg-light);
 }
 
 .dark-mode .summary-details p {
-  color: #e2e8f0;
+  color: var(--text-light);
+}
+
+.dark-mode .search-results h3 {
+  color: var(--text-secondary);
 }
 
 /* Responsive */
@@ -666,5 +487,9 @@
   .appointment-type-group {
     flex-direction: column;
     gap: 10px;
+  }
+
+  .slots-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   }
 }

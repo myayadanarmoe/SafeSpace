@@ -87,7 +87,7 @@ export default function DoctorSelectionPage() {
     <div className="doctor-selection-container">
       <div className="doctor-header">
         <h1>Find Your Therapist</h1>
-        <p>Browse our experienced mental health professionals</p>
+        <p className="text-center">Browse our experienced mental health professionals</p>
       </div>
 
       {/* Search and Filter Section */}

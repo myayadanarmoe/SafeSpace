@@ -3,7 +3,7 @@ import db from "../config/db.js";
 
 const router = express.Router();
 
-// Search patients by username/email
+// Search patients by name/email
 router.get("/users/search", (req, res) => {
   const { term } = req.query;
   
@@ -12,9 +12,9 @@ router.get("/users/search", (req, res) => {
   }
   
   const sql = `
-    SELECT id, username, email, type 
+    SELECT id, name, email, type 
     FROM users 
-    WHERE username LIKE ? OR email LIKE ?
+    WHERE name LIKE ? OR email LIKE ?
     LIMIT 20
   `;
   
@@ -36,7 +36,7 @@ router.get("/medicalrecords/patient/:patientId", (req, res) => {
   const sql = `
     SELECT 
       mr.*,
-      u.username as clinician_name,
+      u.name as clinician_name,
       a.scheduled_date as appointment_date,
       a.scheduled_time as appointment_time,
       GROUP_CONCAT(DISTINCT d.diagnosisName) as diagnoses,
@@ -85,8 +85,8 @@ router.get("/medicalrecords/:recordId", (req, res) => {
   const sql = `
     SELECT 
       mr.*,
-      u.username as clinician_name,
-      p.username as patient_name,
+      u.name as clinician_name,
+      p.name as patient_name,
       p.email as patient_email,
       a.scheduled_date as appointment_date,
       a.scheduled_time as appointment_time,

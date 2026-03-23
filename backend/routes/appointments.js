@@ -3,6 +3,16 @@ import db from "../config/db.js";
 
 const router = express.Router();
 
+// Helper function to generate token number
+function generateTokenNumber() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `TKN${year}${month}${day}-${random}`;
+}
+
 // Get appointments for a patient
 router.get("/appointments/patient/:patientId", (req, res) => {
   const { patientId } = req.params;
@@ -10,11 +20,16 @@ router.get("/appointments/patient/:patientId", (req, res) => {
   const sql = `
     SELECT 
       a.*,
-      u.username as clinician_name,
-      u.email as clinician_email
+      u.name as clinician_name,
+      u.email as clinician_email,
+      r.room_number,
+      b.city as branch_city
     FROM appointments a
-    JOIN users u ON a.clinicianID = u.id
-    WHERE a.patientID = ?
+    JOIN clinicians c ON a.clinicianID = c.clinicianID
+    JOIN users u ON c.userID = u.id
+    LEFT JOIN rooms r ON a.room_id = r.room_id
+    LEFT JOIN branches b ON r.branch_id = b.branch_id
+    WHERE a.user_id = ?
     ORDER BY a.scheduled_date DESC, a.scheduled_time DESC
   `;
   
@@ -34,10 +49,14 @@ router.get("/appointments/clinician/:clinicianId", (req, res) => {
   const sql = `
     SELECT 
       a.*,
-      u.username as patient_name,
-      u.email as patient_email
+      u.name as patient_name,
+      u.email as patient_email,
+      r.room_number,
+      b.city as branch_city
     FROM appointments a
-    JOIN users u ON a.patientID = u.id
+    JOIN users u ON a.user_id = u.id
+    LEFT JOIN rooms r ON a.room_id = r.room_id
+    LEFT JOIN branches b ON r.branch_id = b.branch_id
     WHERE a.clinicianID = ?
     ORDER BY a.scheduled_date DESC, a.scheduled_time DESC
   `;
@@ -58,14 +77,18 @@ router.get("/appointments/date/:date", (req, res) => {
   const sql = `
     SELECT 
       a.*,
-      p.username as patient_name,
+      p.name as patient_name,
       p.email as patient_email,
-      p.type as patient_type,
-      c.username as clinician_name,
-      c.email as clinician_email
+      u.name as clinician_name,
+      u.email as clinician_email,
+      r.room_number,
+      b.city as branch_city
     FROM appointments a
-    JOIN users p ON a.patientID = p.id
-    JOIN users c ON a.clinicianID = c.id
+    JOIN users p ON a.user_id = p.id
+    JOIN clinicians c ON a.clinicianID = c.clinicianID
+    JOIN users u ON c.userID = u.id
+    LEFT JOIN rooms r ON a.room_id = r.room_id
+    LEFT JOIN branches b ON r.branch_id = b.branch_id
     WHERE a.scheduled_date = ?
     ORDER BY a.scheduled_time ASC
   `;
@@ -86,14 +109,14 @@ router.get("/appointments/clinician/:clinicianId/date/:date", (req, res) => {
   const sql = `
     SELECT 
       a.*,
-      p.username as patient_name,
+      p.name as patient_name,
       p.email as patient_email,
-      p.type as patient_type,
-      c.username as clinician_name,
-      c.email as clinician_email
+      r.room_number,
+      b.city as branch_city
     FROM appointments a
-    JOIN users p ON a.patientID = p.id
-    JOIN users c ON a.clinicianID = c.id
+    JOIN users p ON a.user_id = p.id
+    LEFT JOIN rooms r ON a.room_id = r.room_id
+    LEFT JOIN branches b ON r.branch_id = b.branch_id
     WHERE a.clinicianID = ? AND a.scheduled_date = ?
     ORDER BY a.scheduled_time ASC
   `;
@@ -107,7 +130,42 @@ router.get("/appointments/clinician/:clinicianId/date/:date", (req, res) => {
   });
 });
 
-// Get appointments for a specific clinician on a specific date (for checking availability)
+// Get appointments by token number (for check-in)
+router.get("/appointments/token/:token", (req, res) => {
+  const { token } = req.params;
+  
+  const sql = `
+    SELECT 
+      a.*,
+      u.name as patient_name,
+      u.email as patient_email,
+      u2.name as clinician_name,
+      r.room_number,
+      b.city as branch_city
+    FROM appointments a
+    JOIN users u ON a.user_id = u.id
+    JOIN clinicians c ON a.clinicianID = c.clinicianID
+    JOIN users u2 ON c.userID = u2.id
+    LEFT JOIN rooms r ON a.room_id = r.room_id
+    LEFT JOIN branches b ON r.branch_id = b.branch_id
+    WHERE a.token_number = ?
+  `;
+  
+  db.query(sql, [token], (err, results) => {
+    if (err) {
+      console.error("❌ MySQL error:", err);
+      return res.status(500).json({ message: "Database error" });
+    }
+    
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+    
+    res.json(results[0]);
+  });
+});
+
+// Check availability
 router.get("/appointments/check", (req, res) => {
   const { clinicianId, date } = req.query;
   
@@ -116,7 +174,7 @@ router.get("/appointments/check", (req, res) => {
     FROM appointments 
     WHERE clinicianID = ? 
     AND scheduled_date = ?
-    AND status IN ('scheduled', 'rescheduled')
+    AND status IN ('scheduled', 'completed')
   `;
   
   db.query(sql, [clinicianId, date], (err, results) => {
@@ -128,57 +186,104 @@ router.get("/appointments/check", (req, res) => {
   });
 });
 
-// Create new appointment
+// Create new appointment with token
 router.post("/appointments", (req, res) => {
-  const { patientId, clinicianId, date, time, type = 'online', roomNumber } = req.body;
+  const { patientId, clinicianId, date, time, type = 'online', roomId } = req.body;
   
-  console.log("Booking appointment with data:", { patientId, clinicianId, date, time, type, roomNumber });
+  console.log("📝 Booking appointment with data:", { patientId, clinicianId, date, time, type, roomId });
   
   if (!patientId || !clinicianId || !date || !time) {
     return res.status(400).json({ message: "Missing required fields" });
   }
   
-  // Check if slot is already booked
-  const checkSql = `
-    SELECT * FROM appointments 
-    WHERE clinicianID = ? 
-    AND scheduled_date = ? 
-    AND scheduled_time = ?
-    AND status IN ('scheduled', 'rescheduled')
-  `;
+  // First, get the actual clinician ID from the clinicians table using the user ID
+  const getClinicianIdSql = `SELECT clinicianID FROM clinicians WHERE userID = ?`;
   
-  db.query(checkSql, [clinicianId, date, time], (checkErr, checkResults) => {
-    if (checkErr) {
-      console.error("❌ MySQL error:", checkErr);
+  db.query(getClinicianIdSql, [clinicianId], (getErr, getResults) => {
+    if (getErr) {
+      console.error("❌ MySQL error:", getErr);
       return res.status(500).json({ message: "Database error" });
     }
     
-    if (checkResults.length > 0) {
-      return res.status(400).json({ message: "This time slot is already booked" });
+    if (getResults.length === 0) {
+      return res.status(404).json({ message: "Clinician not found" });
     }
     
-    // Create appointment
-    const insertSql = `
-      INSERT INTO appointments 
-      (patientID, clinicianID, scheduled_date, scheduled_time, appointment_type, status, room_number) 
-      VALUES (?, ?, ?, ?, ?, 'scheduled', ?)
+    const actualClinicianId = getResults[0].clinicianID;
+    
+    // Check if slot is already booked
+    const checkSql = `
+      SELECT * FROM appointments 
+      WHERE clinicianID = ? 
+      AND scheduled_date = ? 
+      AND scheduled_time = ?
+      AND status IN ('scheduled', 'completed')
     `;
     
-    db.query(insertSql, [patientId, clinicianId, date, time, type, roomNumber || null], (insertErr, result) => {
-      if (insertErr) {
-        console.error("❌ MySQL error:", insertErr);
+    db.query(checkSql, [actualClinicianId, date, time], (checkErr, checkResults) => {
+      if (checkErr) {
+        console.error("❌ MySQL error:", checkErr);
         return res.status(500).json({ message: "Database error" });
       }
       
-      console.log("Appointment created with ID:", result.insertId);
+      if (checkResults.length > 0) {
+        return res.status(400).json({ message: "This time slot is already booked" });
+      }
       
-      res.status(201).json({ 
-        message: "Appointment booked successfully",
-        appointmentId: result.insertId
-      });
+      // For offline appointments, check if room is available
+      if (type === 'offline' && roomId) {
+        const checkRoomSql = `
+          SELECT * FROM appointments 
+          WHERE room_id = ? 
+          AND scheduled_date = ? 
+          AND scheduled_time = ?
+          AND status IN ('scheduled', 'completed')
+        `;
+        
+        db.query(checkRoomSql, [roomId, date, time], (roomErr, roomResults) => {
+          if (roomErr) {
+            console.error("❌ MySQL error:", roomErr);
+            return res.status(500).json({ message: "Database error" });
+          }
+          
+          if (roomResults.length > 0) {
+            return res.status(400).json({ message: "This room is already booked for this time" });
+          }
+          
+          createAppointment(patientId, actualClinicianId, date, time, type, roomId, res);
+        });
+      } else {
+        createAppointment(patientId, actualClinicianId, date, time, type, null, res);
+      }
     });
   });
 });
+
+// Helper function to create appointment with token
+function createAppointment(patientId, actualClinicianId, date, time, type, roomId, res) {
+  const tokenNumber = generateTokenNumber();
+  
+  const insertSql = `
+    INSERT INTO appointments 
+    (user_id, clinicianID, scheduled_date, scheduled_time, appointment_type, status, room_id, token_number) 
+    VALUES (?, ?, ?, ?, ?, 'scheduled', ?, ?)
+  `;
+  
+  db.query(insertSql, [patientId, actualClinicianId, date, time, type, roomId, tokenNumber], (insertErr, result) => {
+    if (insertErr) {
+      console.error("❌ MySQL error:", insertErr);
+      return res.status(500).json({ message: "Database error" });
+    }
+    
+    console.log("✅ Appointment created with ID:", result.insertId, "Token:", tokenNumber);
+    
+    res.status(201).json({ 
+      message: "Appointment booked successfully",
+      appointmentId: result.insertId,
+      tokenNumber: tokenNumber
+    });
+  });
+}
 
 // Update appointment status
 router.put("/appointments/:id/status", (req, res) => {
@@ -227,18 +332,14 @@ router.put("/appointments/:id/cancel", (req, res) => {
   });
 });
 
-// Update room number
+// Update room
 router.put("/appointments/:id/room", (req, res) => {
   const { id } = req.params;
-  const { roomNumber } = req.body;
+  const { roomId } = req.body;
   
-  if (!roomNumber) {
-    return res.status(400).json({ message: "Room number is required" });
-  }
+  const sql = "UPDATE appointments SET room_id = ? WHERE appointmentID = ?";
   
-  const sql = "UPDATE appointments SET room_number = ? WHERE appointmentID = ?";
-  
-  db.query(sql, [roomNumber, id], (err, result) => {
+  db.query(sql, [roomId, id], (err, result) => {
     if (err) {
       console.error("❌ MySQL error:", err);
       return res.status(500).json({ message: "Database error" });
@@ -257,10 +358,6 @@ router.put("/appointments/:id/meeting-link", (req, res) => {
   const { id } = req.params;
   const { meetingLink } = req.body;
   
-  if (!meetingLink) {
-    return res.status(400).json({ message: "Meeting link is required" });
-  }
-  
   const sql = "UPDATE appointments SET meeting_link = ? WHERE appointmentID = ?";
   
   db.query(sql, [meetingLink, id], (err, result) => {
@@ -277,7 +374,6 @@ router.put("/appointments/:id/meeting-link", (req, res) => {
   });
 });
 
-// Check-in patient
 // Check-in patient (mark as completed)
 router.put("/appointments/:id/checkin", (req, res) => {
   const { id } = req.params;
@@ -301,9 +397,8 @@ router.put("/appointments/:id/checkin", (req, res) => {
 // Reschedule appointment
 router.put("/appointments/:id/reschedule", (req, res) => {
   const { id } = req.params;
-  const { newDate, newTime, newRoomNumber } = req.body;
+  const { newDate, newTime, newRoomId } = req.body;
   
-  // First get the original appointment
   const getSql = "SELECT * FROM appointments WHERE appointmentID = ?";
   
   db.query(getSql, [id], (getErr, getResults) => {
@@ -313,13 +408,12 @@ router.put("/appointments/:id/reschedule", (req, res) => {
     
     const original = getResults[0];
     
-    // Check if new slot is available
     const checkSql = `
       SELECT * FROM appointments 
       WHERE clinicianID = ? 
       AND scheduled_date = ? 
       AND scheduled_time = ?
-      AND status IN ('scheduled', 'rescheduled')
+      AND status IN ('scheduled', 'completed')
       AND appointmentID != ?
     `;
     
@@ -332,32 +426,49 @@ router.put("/appointments/:id/reschedule", (req, res) => {
         return res.status(400).json({ message: "New time slot is not available" });
       }
       
-      // Update the appointment
-      let updateSql = `
-        UPDATE appointments 
-        SET scheduled_date = ?, scheduled_time = ?, status = 'rescheduled', rescheduled_from = ?
-      `;
-      
-      const params = [newDate, newTime, original.appointmentID];
-      
-      // If new room number is provided for offline appointment, update it
-      if (newRoomNumber) {
-        updateSql += `, room_number = ?`;
-        params.push(newRoomNumber);
-      }
-      
-      updateSql += ` WHERE appointmentID = ?`;
-      params.push(id);
-      
-      db.query(updateSql, params, (updateErr) => {
-        if (updateErr) {
-          return res.status(500).json({ message: "Database error" });
-        }
+      if (original.appointment_type === 'offline' && newRoomId) {
+        const checkRoomSql = `
+          SELECT * FROM appointments 
+          WHERE room_id = ? 
+          AND scheduled_date = ? 
+          AND scheduled_time = ?
+          AND status IN ('scheduled', 'completed')
+          AND appointmentID != ?
+        `;
         
-        res.json({ message: "Appointment rescheduled successfully" });
-      });
+        db.query(checkRoomSql, [newRoomId, newDate, newTime, id], (roomErr, roomResults) => {
+          if (roomErr) {
+            return res.status(500).json({ message: "Database error" });
+          }
+          
+          if (roomResults.length > 0) {
+            return res.status(400).json({ message: "Room is not available at this time" });
+          }
+          
+          updateAppointment(id, newDate, newTime, newRoomId, original, res);
+        });
+      } else {
+        updateAppointment(id, newDate, newTime, null, original, res);
+      }
     });
   });
 });
+
+function updateAppointment(id, newDate, newTime, newRoomId, original, res) {
+  const updateSql = `
+    UPDATE appointments 
+    SET scheduled_date = ?, scheduled_time = ?, status = 'scheduled', 
+        rescheduled_from = ?, room_id = COALESCE(?, room_id)
+    WHERE appointmentID = ?
+  `;
+  
+  db.query(updateSql, [newDate, newTime, original.appointmentID, newRoomId, id], (updateErr) => {
+    if (updateErr) {
+      return res.status(500).json({ message: "Database error" });
+    }
+    
+    res.json({ message: "Appointment rescheduled successfully" });
+  });
+}
 
 export default router;

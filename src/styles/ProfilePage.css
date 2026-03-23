@@ -1,3 +1,6 @@
+@import './variables.css';
+@import './utilities.css';
+
 .profile-container {
   max-width: 1200px;
   margin: 40px auto;
@@ -13,54 +16,13 @@
 }
 
 .profile-header h1 {
-  color: #333;
+  color: var(--text-primary);
   font-size: 2rem;
   margin: 0;
-}
-
-.back-button {
-  padding: 10px 20px;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.back-button:hover {
-  background-color: #5a6268;
-}
-
-.message {
-  padding: 12px 20px;
-  border-radius: 6px;
-  margin-bottom: 20px;
-  animation: slideIn 0.3s ease;
-}
-
-.message.success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.message.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .profile-content {
@@ -71,10 +33,10 @@
 
 /* Sidebar Styles */
 .profile-sidebar {
-  background: white;
-  border-radius: 12px;
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
   padding: 30px 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   height: fit-content;
 }
 
@@ -104,7 +66,7 @@
 .fallback-avatar {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   color: white;
   display: flex;
   align-items: center;
@@ -116,7 +78,7 @@
 .change-pic-btn {
   display: inline-block;
   padding: 8px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   color: white;
   border-radius: 20px;
   font-size: 14px;
@@ -130,34 +92,35 @@
 }
 
 .pic-hint {
-  color: #999;
+  color: var(--text-muted);
   font-size: 11px;
   margin-top: 10px;
 }
 
 .user-info-card {
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--border-light);
   padding-top: 20px;
 }
 
 .user-info-card h3 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 15px;
   font-size: 1.1rem;
 }
 
 .user-info-card p {
-  color: #495057;
+  color: var(--text-light);
   margin: 10px 0;
   font-size: 0.95rem;
 }
 
 .user-info-card strong {
-  color: #333;
+  color: var(--text-primary);
   width: 100px;
   display: inline-block;
 }
 
+/* Role badges */
 .role-badge {
   display: inline-block;
   padding: 4px 12px;
@@ -167,7 +130,7 @@
 }
 
 .role-badge.admin {
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  background: var(--danger-gradient);
   color: white;
 }
 
@@ -182,7 +145,7 @@
 }
 
 .role-badge.free-user {
-  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  background: var(--secondary-gradient);
   color: white;
 }
 
@@ -191,144 +154,87 @@
   color: white;
 }
 
+.role-badge.psychiatrist {
+  background: linear-gradient(135deg, #6610f2 0%, #520dc2 100%);
+  color: white;
+}
+
+.role-badge.psychologist {
+  background: linear-gradient(135deg, #6f42c1 0%, #5a36a0 100%);
+  color: white;
+}
+
+.role-badge.therapist {
+  background: linear-gradient(135deg, #007bff 0%, #0069d9 100%);
+  color: white;
+}
+
 /* Form Styles */
 .profile-form-section {
-  background: white;
-  border-radius: 12px;
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
   padding: 30px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 .profile-form h2 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 30px;
   font-size: 1.5rem;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #495057;
-  font-size: 0.95rem;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: all 0.3s;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .form-divider {
   margin: 30px 0 20px;
   padding-top: 20px;
-  border-top: 2px solid #e9ecef;
+  border-top: 2px solid var(--border-light);
 }
 
 .form-divider h3 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 10px;
   font-size: 1.2rem;
 }
 
 .form-hint {
-  color: #999;
+  color: var(--text-muted);
   font-size: 0.85rem;
   margin-bottom: 20px;
-}
-
-.form-actions {
-  display: flex;
-  gap: 15px;
-  margin-top: 30px;
-}
-
-.btn-save {
-  padding: 12px 30px;
-  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-
-.btn-save:hover {
-  transform: translateY(-2px);
-}
-
-.btn-cancel {
-  padding: 12px 30px;
-  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-
-.btn-cancel:hover {
-  transform: translateY(-2px);
-}
-
-.loading-spinner {
-  text-align: center;
-  padding: 60px;
-  color: #666;
-  font-size: 1.2rem;
 }
 
 /* Dark mode support */
 .dark-mode .profile-sidebar,
 .dark-mode .profile-form-section {
-  background-color: #2d3748;
+  background-color: var(--bg-dark);
 }
 
 .dark-mode .profile-header h1,
 .dark-mode .profile-form h2,
 .dark-mode .user-info-card h3,
 .dark-mode .form-divider h3 {
-  color: #e2e8f0;
+  color: var(--text-light);
 }
 
 .dark-mode .user-info-card p,
 .dark-mode .form-group label {
-  color: #a0aec0;
+  color: var(--text-secondary);
 }
 
 .dark-mode .user-info-card strong {
-  color: #e2e8f0;
+  color: var(--text-light);
 }
 
 .dark-mode .form-group input {
-  background-color: #4a5568;
-  border-color: #4a5568;
-  color: #e2e8f0;
+  background-color: var(--bg-light);
+  border-color: var(--border-light);
+  color: var(--text-light);
 }
 
 .dark-mode .form-group input:focus {
-  border-color: #667eea;
+  border-color: var(--border-focus);
 }
 
 .dark-mode .form-divider {
-  border-top-color: #4a5568;
+  border-top-color: var(--border-light);
 }
 
 /* Responsive */

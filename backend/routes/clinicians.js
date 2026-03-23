@@ -10,12 +10,15 @@ router.get("/clinicians", (req, res) => {
   let sql = `
     SELECT 
       u.id,
-      u.username,
+      u.name,
       u.email,
       u.type,
       u.profile_pic,
       MAX(c.licenseNumber) as licenseNumber,
       MAX(c.about) as about,
+      MAX(c.phone) as phone,
+      MAX(c.address) as address,
+      MAX(c.primary_branch_id) as primary_branch_id,
       GROUP_CONCAT(DISTINCT d.diagnosisName) as diagnoses
     FROM users u
     INNER JOIN clinicians c ON u.id = c.userID
@@ -27,12 +30,12 @@ router.get("/clinicians", (req, res) => {
   const queryParams = [];
   
   if (search) {
-    sql += ` AND (u.username LIKE ? OR c.about LIKE ? OR d.diagnosisName LIKE ?)`;
+    sql += ` AND (u.name LIKE ? OR c.about LIKE ? OR d.diagnosisName LIKE ?)`;
     const searchPattern = `%${search}%`;
     queryParams.push(searchPattern, searchPattern, searchPattern);
   }
   
-  sql += ` GROUP BY u.id ORDER BY u.username`;
+  sql += ` GROUP BY u.id ORDER BY u.name`;
   
   console.log("Executing SQL:", sql);
   console.log("With params:", queryParams);
@@ -48,12 +51,15 @@ router.get("/clinicians", (req, res) => {
     // Parse diagnoses string to array
     const clinicians = results.map(doc => ({
       id: doc.id,
-      username: doc.username,
+      name: doc.name,
       email: doc.email,
       type: doc.type,
       profile_pic: doc.profile_pic ? `http://localhost:5000${doc.profile_pic}` : null,
       licenseNumber: doc.licenseNumber,
       about: doc.about || "Experienced mental health professional dedicated to providing compassionate care.",
+      phone: doc.phone,
+      address: doc.address,
+      branch_id: doc.primary_branch_id,
       diagnoses: doc.diagnoses ? doc.diagnoses.split(',') : []
     }));
     
@@ -68,12 +74,15 @@ router.get("/clinicians/:id", (req, res) => {
   const sql = `
     SELECT 
       u.id,
-      u.username,
+      u.name,
       u.email,
       u.type,
       u.profile_pic,
       MAX(c.licenseNumber) as licenseNumber,
       MAX(c.about) as about,
+      MAX(c.phone) as phone,
+      MAX(c.address) as address,
+      MAX(c.primary_branch_id) as primary_branch_id,
       GROUP_CONCAT(DISTINCT d.diagnosisName) as diagnoses
     FROM users u
     INNER JOIN clinicians c ON u.id = c.userID

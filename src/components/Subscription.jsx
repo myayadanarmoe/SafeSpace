@@ -147,7 +147,7 @@ export default function Subscription() {
           ← Back to Home
         </button>
         <h1>Choose Your Plan</h1>
-        <p>Flexible options for every need</p>
+        <p className="text-center">Flexible options for every need</p>
       </div>
 
       {message.text && (
@@ -320,7 +320,7 @@ export default function Subscription() {
               </div>
 
               <div className="modal-actions">
-                <button type="submit" className="submit-btn youth">Submit for FREE Verification</button>
+                <button type="submit" className="btn-create">Submit for FREE Verification</button>
                 <button type="button" className="cancel-btn" onClick={handleCloseModal}>Cancel</button>
               </div>
             </form>

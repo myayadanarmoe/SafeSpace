@@ -11,9 +11,12 @@ router.get("/admin/users", (req, res) => {
   
   let countQuery = "SELECT COUNT(*) as total FROM users";
   let query = `
-    SELECT u.id, u.username, u.email, u.type, u.profile_pic, u.created_at,
-           c.licenseNumber, 
-           c.about,
+    SELECT u.id, u.name, u.email, u.type, u.profile_pic, u.created_at,
+           MAX(c.licenseNumber) as licenseNumber, 
+           MAX(c.phone) as phone,
+           MAX(c.address) as address,
+           MAX(c.primary_branch_id) as primaryBranchId,
+           MAX(c.about) as about,
            GROUP_CONCAT(DISTINCT d.diagnosisName) as diagnoses
     FROM users u
     LEFT JOIN clinicians c ON u.id = c.userID
@@ -25,13 +28,13 @@ router.get("/admin/users", (req, res) => {
 
   if (search) {
     const searchPattern = `%${search}%`;
-    query += " WHERE u.username LIKE ? OR u.email LIKE ? OR u.type LIKE ?";
-    countQuery += " WHERE username LIKE ? OR email LIKE ? OR type LIKE ?";
+    query += " WHERE u.name LIKE ? OR u.email LIKE ? OR u.type LIKE ?";
+    countQuery += " WHERE name LIKE ? OR email LIKE ? OR type LIKE ?";
     queryParams = [searchPattern, searchPattern, searchPattern];
     countParams = [searchPattern, searchPattern, searchPattern];
   }
 
-  query += " GROUP BY u.id, c.licenseNumber, c.about ORDER BY u.id DESC LIMIT ? OFFSET ?";
+  query += " GROUP BY u.id ORDER BY u.id DESC LIMIT ? OFFSET ?";
   queryParams.push(parseInt(limit), parseInt(offset));
 
   db.query(countQuery, countParams, (countErr, countResult) => {
@@ -48,16 +51,19 @@ router.get("/admin/users", (req, res) => {
         return res.status(500).json({ message: "Database error: " + err.sqlMessage });
       }
 
-      // Parse diagnoses string to array and ensure licenseNumber and about are included
+      // Parse diagnoses string to array
       const users = results.map(user => ({
         id: user.id,
-        username: user.username,
+        name: user.name,
         email: user.email,
         type: user.type,
         profile_pic: user.profile_pic,
         created_at: user.created_at,
-        licenseNumber: user.licenseNumber || '', // Include even if null
-        about: user.about || '', // Include even if null
+        licenseNumber: user.licenseNumber || '',
+        phone: user.phone || '',
+        address: user.address || '',
+        primaryBranchId: user.primaryBranchId || '',
+        about: user.about || '',
         diagnoses: user.diagnoses ? user.diagnoses.split(',') : []
       }));
 
@@ -89,8 +95,8 @@ router.get("/admin/users/:id", (req, res) => {
   const { id } = req.params;
   
   const sql = `
-    SELECT u.id, u.username, u.email, u.type, u.profile_pic, u.created_at,
-           c.licenseNumber, c.about,
+    SELECT u.id, u.name, u.email, u.type, u.profile_pic, u.created_at,
+           c.licenseNumber, c.phone, c.address, c.primary_branch_id as primaryBranchId, c.about,
            GROUP_CONCAT(DISTINCT d.diagnosisID) as diagnosisIds,
            GROUP_CONCAT(DISTINCT d.diagnosisName) as diagnosisNames
     FROM users u
@@ -98,7 +104,7 @@ router.get("/admin/users/:id", (req, res) => {
     LEFT JOIN user_diagnosis ud ON u.id = ud.userID
     LEFT JOIN diagnosis d ON ud.diagnosisID = d.diagnosisID
     WHERE u.id = ?
-    GROUP BY u.id, c.licenseNumber, c.about
+    GROUP BY u.id
   `;
   
   db.query(sql, [id], (err, results) => {
@@ -115,19 +121,22 @@ router.get("/admin/users/:id", (req, res) => {
     user.diagnosisIds = user.diagnosisIds ? user.diagnosisIds.split(',').map(Number) : [];
     user.diagnosisNames = user.diagnosisNames ? user.diagnosisNames.split(',') : [];
     user.licenseNumber = user.licenseNumber || '';
+    user.phone = user.phone || '';
+    user.address = user.address || '';
+    user.primaryBranchId = user.primaryBranchId || '';
     user.about = user.about || '';
     
     res.json(user);
   });
 });
 
-// UPDATE USER ROLE ONLY - MORE SPECIFIC ROUTE FIRST
+// UPDATE USER ROLE ONLY
 router.put("/admin/users/:id/role", (req, res) => {
   const { id } = req.params;
   const { type } = req.body;
   
   const validTypes = [
-    'Free User',
+    'Standard User',
     'Premium User',
     'Youth User',
     'Staff',
@@ -157,13 +166,13 @@ router.put("/admin/users/:id/role", (req, res) => {
   });
 });
 
-// UPDATE FULL USER - LESS SPECIFIC ROUTE AFTER
+// UPDATE FULL USER - with all clinician fields
 router.put("/admin/users/:id", async (req, res) => {
   const { id } = req.params;
-  const { username, email, type, licenseNumber, about, diagnosisIds } = req.body;
+  const { name, email, type, licenseNumber, phone, address, primaryBranchId, about, diagnosisIds } = req.body;
   
   const validTypes = [
-    'Free User',
+    'Standard User',
     'Premium User',
     'Youth User',
     'Staff',
@@ -173,8 +182,8 @@ router.put("/admin/users/:id", async (req, res) => {
     'Therapist'
   ];
   
-  if (!username || !email) {
-    return res.status(400).json({ message: "Username and email are required" });
+  if (!name || !email) {
+    return res.status(400).json({ message: "Name and email are required" });
   }
   
   if (!validTypes.includes(type)) {
@@ -182,15 +191,15 @@ router.put("/admin/users/:id", async (req, res) => {
   }
   
   // First update users table
-  const userSql = "UPDATE users SET username = ?, email = ?, type = ? WHERE id = ?";
+  const userSql = "UPDATE users SET name = ?, email = ?, type = ? WHERE id = ?";
   
-  db.query(userSql, [username, email, type, id], (err, userResult) => {
+  db.query(userSql, [name, email, type, id], (err, userResult) => {
     if (err) {
       console.error("❌ MySQL error:", err);
       
       if (err.code === "ER_DUP_ENTRY") {
-        if (err.sqlMessage.includes("username")) {
-          return res.status(400).json({ message: "Username already exists" });
+        if (err.sqlMessage.includes("name")) {
+          return res.status(400).json({ message: "Name already exists" });
         } else {
           return res.status(400).json({ message: "Email already exists" });
         }
@@ -217,10 +226,17 @@ router.put("/admin/users/:id", async (req, res) => {
         }
         
         if (checkResults.length > 0) {
-          // Update existing clinician record
-          const updateClinicianSql = "UPDATE clinicians SET licenseNumber = ?, about = ? WHERE userID = ?";
+          // Update existing clinician record - with all fields
+          const updateClinicianSql = "UPDATE clinicians SET licenseNumber = ?, phone = ?, address = ?, primary_branch_id = ?, about = ? WHERE userID = ?";
           
-          db.query(updateClinicianSql, [licenseNumber || null, about || null, id], (updateErr) => {
+          db.query(updateClinicianSql, [
+            licenseNumber || null, 
+            phone || null, 
+            address || null, 
+            primaryBranchId || null, 
+            about || null, 
+            id
+          ], (updateErr) => {
             if (updateErr) {
               console.error("❌ MySQL error:", updateErr);
               return res.status(500).json({ message: "Database error" });
@@ -230,10 +246,17 @@ router.put("/admin/users/:id", async (req, res) => {
             handleDiagnoses(id, diagnosisIds, res);
           });
         } else {
-          // Insert new clinician record
-          const insertClinicianSql = "INSERT INTO clinicians (userID, licenseNumber, about) VALUES (?, ?, ?)";
+          // Insert new clinician record - with all fields
+          const insertClinicianSql = "INSERT INTO clinicians (userID, licenseNumber, phone, address, primary_branch_id, about) VALUES (?, ?, ?, ?, ?, ?)";
           
-          db.query(insertClinicianSql, [id, licenseNumber || null, about || null], (insertErr) => {
+          db.query(insertClinicianSql, [
+            id, 
+            licenseNumber || null, 
+            phone || null, 
+            address || null, 
+            primaryBranchId || null, 
+            about || null
+          ], (insertErr) => {
             if (insertErr) {
               console.error("❌ MySQL error:", insertErr);
               return res.status(500).json({ message: "Database error" });
@@ -312,24 +335,24 @@ function handleDiagnoses(userId, diagnosisIds, res) {
 
 // Create new user (admin) - with optional clinician data
 router.post("/admin/users", async (req, res) => {
-  const { username, email, password, type = 'Free User', licenseNumber, about, diagnosisIds } = req.body;
+  const { name, email, password, type = 'Standard User', licenseNumber, phone, address, primaryBranchId, about, diagnosisIds } = req.body;
   
-  if (!username || !email || !password) {
-    return res.status(400).json({ message: "Username, email and password are required" });
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: "Name, email and password are required" });
   }
   
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    const userSql = "INSERT INTO users (username, email, password, type) VALUES (?, ?, ?, ?)";
+    const userSql = "INSERT INTO users (name, email, password, type) VALUES (?, ?, ?, ?)";
     
-    db.query(userSql, [username, email, hashedPassword, type], (err, userResult) => {
+    db.query(userSql, [name, email, hashedPassword, type], (err, userResult) => {
       if (err) {
         console.error("❌ MySQL error:", err);
         
         if (err.code === "ER_DUP_ENTRY") {
-          if (err.sqlMessage.includes("username")) {
-            return res.status(400).json({ message: "Username already exists" });
+          if (err.sqlMessage.includes("name")) {
+            return res.status(400).json({ message: "Name already exists" });
           } else {
             return res.status(400).json({ message: "Email already exists" });
           }
@@ -344,9 +367,9 @@ router.post("/admin/users", async (req, res) => {
       const clinicianTypes = ['Psychiatrist', 'Psychologist', 'Therapist'];
       
       if (clinicianTypes.includes(type) && licenseNumber) {
-        const clinicianSql = "INSERT INTO clinicians (userID, licenseNumber, about) VALUES (?, ?, ?)";
+        const clinicianSql = "INSERT INTO clinicians (userID, licenseNumber, phone, address, primary_branch_id, about) VALUES (?, ?, ?, ?, ?, ?)";
         
-        db.query(clinicianSql, [userId, licenseNumber, about || null], (clinErr) => {
+        db.query(clinicianSql, [userId, licenseNumber, phone || null, address || null, primaryBranchId || null, about || null], (clinErr) => {
           if (clinErr) {
             console.error("❌ MySQL error:", clinErr);
             return res.status(500).json({ message: "Error creating clinician record" });

@@ -1,3 +1,7 @@
+@import './variables.css';
+@import './utilities.css';
+
+/* Booking-specific styles */
 .booking-container {
   max-width: 1200px;
   margin: 40px auto;
@@ -12,28 +16,11 @@
   margin-bottom: 30px;
 }
 
-.back-button {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
-  white-space: nowrap;
-}
-
-.back-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
-}
-
 .booking-header h1 {
   font-size: 2rem;
-  color: #333;
+  color: var(--text-primary);
   margin: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -48,10 +35,10 @@
 
 /* Doctor Info Card */
 .doctor-info-card {
-  background: white;
-  border-radius: 16px;
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   height: fit-content;
 }
 
@@ -67,13 +54,13 @@
 
 .doctor-info-details h2 {
   margin: 0 0 5px 0;
-  color: #333;
+  color: var(--text-primary);
   font-size: 1.3rem;
 }
 
 .doctor-info-specialty {
   display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   color: white;
   padding: 4px 12px;
   border-radius: 20px;
@@ -83,7 +70,7 @@
 }
 
 .doctor-info-about {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   line-height: 1.6;
   margin-bottom: 15px;
@@ -106,79 +93,69 @@
 
 /* Booking Section */
 .booking-section {
-  background: white;
-  border-radius: 16px;
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
   padding: 30px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 .booking-section h2 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 20px;
   font-size: 1.5rem;
 }
 
+/* Message styles - using utilities but with booking-specific colors */
 .booking-message {
-  padding: 12px 20px;
-  border-radius: 8px;
+  padding: var(--space-md) var(--space-xl);
+  border-radius: var(--radius-lg);
   margin-bottom: 20px;
   animation: slideIn 0.3s ease;
 }
 
 .booking-message.success {
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  background: var(--success-gradient);
   color: #155724;
 }
 
 .booking-message.error {
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  background: var(--danger-gradient);
   color: #721c24;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 
 .date-selector {
   margin-bottom: 30px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, var(--bg-light) 0%, #e9ecef 100%);
   padding: 20px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
 }
 
 .date-selector label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #495057;
+  color: var(--text-light);
 }
 
 .date-input {
   width: 100%;
   max-width: 300px;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  padding: var(--space-md);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
   font-size: 1rem;
   transition: all 0.3s;
-  background: white;
+  background: var(--bg-white);
 }
 
 .date-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--border-focus);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .slots-container h3 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 15px;
 }
 
@@ -191,27 +168,27 @@
 
 .slot-button {
   padding: 12px 8px;
-  background: white;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  background: var(--bg-white);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
   font-size: 0.9rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--text-light);
   cursor: pointer;
   transition: all 0.3s;
   position: relative;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .slot-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  border-color: #667eea;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: var(--border-focus);
+  background: var(--primary-gradient);
   color: white;
 }
 
 .slot-button.selected {
-  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+  background: var(--success-gradient);
   border-color: #28a745;
   color: white;
 }
@@ -238,24 +215,24 @@
 .booking-confirm {
   margin-top: 20px;
   padding: 20px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
+  background: linear-gradient(135deg, var(--bg-light) 0%, #e9ecef 100%);
+  border-radius: var(--radius-xl);
   text-align: center;
 }
 
 .booking-confirm p {
   margin-bottom: 15px;
   font-size: 1.1rem;
-  color: #495057;
+  color: var(--text-light);
   font-weight: 500;
 }
 
 .confirm-button {
   padding: 12px 30px;
-  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+  background: var(--success-gradient);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -270,21 +247,21 @@
 .no-slots {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: var(--text-secondary);
   font-style: italic;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
+  background: linear-gradient(135deg, var(--bg-light) 0%, #e9ecef 100%);
+  border-radius: var(--radius-xl);
 }
 
 /* Booked Appointments */
 .booked-appointments {
   margin-top: 40px;
-  border-top: 2px solid #e0e0e0;
+  border-top: 2px solid var(--border-light);
   padding-top: 20px;
 }
 
 .booked-appointments h3 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 15px;
 }
 
@@ -299,19 +276,19 @@
   align-items: center;
   gap: 15px;
   padding: 12px 15px;
-  background: white;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  background: var(--bg-white);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
   transition: all 0.3s;
 }
 
 .booked-item:hover {
-  border-color: #667eea;
+  border-color: var(--border-focus);
 }
 
 .booked-date {
   font-weight: 600;
-  color: #495057;
+  color: var(--text-light);
   min-width: 100px;
 }
 
@@ -322,95 +299,74 @@
 
 .booked-status {
   margin-left: auto;
-  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+  background: var(--success-gradient);
   color: white;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.85rem;
 }
 
-/* Loading spinner */
-.loading-spinner {
-  text-align: center;
-  padding: 60px;
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Dark mode support */
+/* Dark mode overrides */
 .dark-mode .booking-header h1 {
-  color: #e2e8f0;
+  color: var(--text-light);
 }
 
 .dark-mode .doctor-info-card,
 .dark-mode .booking-section,
 .dark-mode .booked-item {
-  background: #2d3748;
+  background: var(--bg-dark);
 }
 
 .dark-mode .doctor-info-details h2,
 .dark-mode .booking-section h2,
 .dark-mode .slots-container h3,
 .dark-mode .booked-appointments h3 {
-  color: #e2e8f0;
+  color: var(--text-light);
 }
 
 .dark-mode .doctor-info-about {
-  color: #a0aec0;
+  color: var(--text-secondary);
 }
 
 .dark-mode .date-selector {
-  background: #4a5568;
+  background: var(--bg-light);
 }
 
 .dark-mode .date-selector label {
-  color: #e2e8f0;
+  color: var(--text-light);
 }
 
 .dark-mode .date-input,
 .dark-mode .slot-button {
-  background: #2d3748;
-  border-color: #4a5568;
-  color: #e2e8f0;
+  background: var(--bg-dark);
+  border-color: var(--border-light);
+  color: var(--text-light);
 }
 
 .dark-mode .slot-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
 }
 
 .dark-mode .booking-confirm {
-  background: #4a5568;
+  background: var(--bg-light);
 }
 
 .dark-mode .booking-confirm p {
-  color: #e2e8f0;
+  color: var(--text-light);
 }
 
 .dark-mode .no-slots {
-  background: #4a5568;
-  color: #a0aec0;
+  background: var(--bg-light);
+  color: var(--text-secondary);
 }
 
 .dark-mode .booked-item {
-  border-color: #4a5568;
+  border-color: var(--border-light);
 }
 
 .dark-mode .booked-date,
 .dark-mode .booked-time {
-  color: #e2e8f0;
+  color: var(--text-light);
 }
 
 .dark-mode .diagnosis-badge {
@@ -444,5 +400,7 @@
 
   .booked-status {
     margin-left: 0;
+    width: 100%;
+    text-align: center;
   }
 }

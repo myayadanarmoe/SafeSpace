@@ -1,0 +1,62 @@
+/* src/styles/variables.css */
+:root {
+  /* Colors */
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --secondary-gradient: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  --success-gradient: linear-gradient(135deg, #28a745 0%, #218838 100%);
+  --danger-gradient: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  --warning-gradient: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+  --info-gradient: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  
+  /* Backgrounds */
+  --bg-light: #f8f9fa;
+  --bg-white: #ffffff;
+  --bg-dark: #2d3748;
+  --bg-darker: #1a202c;
+  
+  /* Text colors */
+  --text-primary: #333;
+  --text-secondary: #666;
+  --text-muted: #999;
+  --text-light: #495057;
+  
+  /* Border colors */
+  --border-light: #e0e0e0;
+  --border-focus: #667eea;
+  
+  /* Status colors */
+  --status-scheduled: #fff3cd;
+  --status-completed: #d4edda;
+  --status-cancelled: #f8d7da;
+  --status-no-show: #e2e3e5;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.1);
+  
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-round: 30px;
+  
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-xxl: 30px;
+}
+
+/* Dark mode variables */
+.dark-mode {
+  --bg-white: #2d3748;
+  --bg-light: #4a5568;
+  --text-primary: #e2e8f0;
+  --text-secondary: #a0aec0;
+  --text-light: #e2e8f0;
+  --border-light: #4a5568;
+}

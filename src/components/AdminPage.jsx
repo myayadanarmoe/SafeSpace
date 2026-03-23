@@ -18,27 +18,34 @@ export default function AdminPage() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [userTypes, setUserTypes] = useState([]);
   const [diagnoses, setDiagnoses] = useState([]);
+  const [branches, setBranches] = useState([]); // Add branches state
   
   // Modal message states
   const [editModalMessage, setEditModalMessage] = useState({ text: "", type: "" });
   const [createModalMessage, setCreateModalMessage] = useState({ text: "", type: "" });
   
-  // Form states
+  // Form states - UPDATED with all clinician fields
   const [editForm, setEditForm] = useState({
-    username: "",
+    name: "",
     email: "",
     role: "",
     licenseNumber: "",
+    phone: "",
+    address: "",
+    primaryBranchId: "",
     about: "",
     diagnosisIds: []
   });
   
   const [newUser, setNewUser] = useState({
-    username: "",
+    name: "",
     email: "",
     password: "",
     type: "Standard User",
     licenseNumber: "",
+    phone: "",
+    address: "",
+    primaryBranchId: "",
     about: "",
     diagnosisIds: []
   });
@@ -57,6 +64,7 @@ export default function AdminPage() {
   useEffect(() => {
     fetchUserTypes();
     fetchDiagnoses();
+    fetchBranches();
     fetchUsers();
   }, []);
 
@@ -82,6 +90,16 @@ export default function AdminPage() {
       setDiagnoses(data);
     } catch (err) {
       console.error("Error fetching diagnoses:", err);
+    }
+  };
+
+  const fetchBranches = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/branches");
+      const data = await res.json();
+      setBranches(data);
+    } catch (err) {
+      console.error("Error fetching branches:", err);
     }
   };
 
@@ -134,13 +152,17 @@ export default function AdminPage() {
     }
   };
 
+  // UPDATED handleEditClick with all fields
   const handleEditClick = (user) => {
     setSelectedUser(user);
     setEditForm({
-      username: user.username || '',
+      name: user.name || '',
       email: user.email || '',
       role: user.type || 'Standard User',
       licenseNumber: user.licenseNumber || '',
+      phone: user.phone || '',
+      address: user.address || '',
+      primaryBranchId: user.primaryBranchId || '',
       about: user.about || '',
       diagnosisIds: user.diagnosisIds || []
     });
@@ -148,16 +170,20 @@ export default function AdminPage() {
     setShowEditModal(true);
   };
 
+  // UPDATED handleUpdateUser with all fields
   const handleUpdateUser = async () => {
     try {
       const res = await fetch(`http://localhost:5000/api/admin/users/${selectedUser.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: editForm.username,
+          name: editForm.name,
           email: editForm.email,
           type: editForm.role,
           licenseNumber: editForm.licenseNumber,
+          phone: editForm.phone,
+          address: editForm.address,
+          primaryBranchId: editForm.primaryBranchId,
           about: editForm.about,
           diagnosisIds: editForm.diagnosisIds
         }),
@@ -177,6 +203,7 @@ export default function AdminPage() {
     }
   };
 
+  // UPDATED handleCreateUser with all fields
   const handleCreateUser = async (e) => {
     e.preventDefault();
 
@@ -193,11 +220,14 @@ export default function AdminPage() {
         showMessage("User created successfully", "success");
         setShowCreateModal(false);
         setNewUser({
-          username: "",
+          name: "",
           email: "",
           password: "",
           type: "Standard User",
           licenseNumber: "",
+          phone: "",
+          address: "",
+          primaryBranchId: "",
           about: "",
           diagnosisIds: []
         });
@@ -289,7 +319,7 @@ export default function AdminPage() {
         <div className="search-bar" style={{ display: 'flex', gap: '10px' }}>
           <input
             type="text"
-            placeholder="Search users by username, email or role..."
+            placeholder="Search users by name, email or role..."
             value={searchInput}
             onChange={handleSearchChange}
             onKeyPress={handleKeyPress}
@@ -324,11 +354,11 @@ export default function AdminPage() {
       </div>
 
       <div className="table-container">
-        <table className="users-table">
+        <table className="users-table data-table">
           <thead>
             <tr>
               <th>ID</th>
-              <th>Username</th>
+              <th>Name</th>
               <th>Email</th>
               <th>Role</th>
               <th>Diagnoses</th>
@@ -344,15 +374,15 @@ export default function AdminPage() {
             ) : (
               users.map((user) => (
                 <tr key={user.id}>
-                  <td>{user.id}</td>
-                  <td>{user.username || 'N/A'}</td>
-                  <td>{user.email}</td>
-                  <td>
+                  <td data-label="ID">{user.id}</td>
+                  <td data-label="Name">{user.name || 'N/A'}</td>
+                  <td data-label="Email">{user.email}</td>
+                  <td data-label="Role">
                     <span className={`role-badge ${getRoleBadgeClass(user.type)}`}>
                       {user.type}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Diagnoses">
                     {user.diagnoses && user.diagnoses.length > 0 ? (
                       <div className="diagnosis-tags">
                         {user.diagnoses.map((diag, index) => (
@@ -363,8 +393,8 @@ export default function AdminPage() {
                       <span className="no-data">-</span>
                     )}
                   </td>
-                  <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                  <td>
+                  <td data-label="Created At">{new Date(user.created_at).toLocaleDateString()}</td>
+                  <td data-label="Actions">
                     <button
                       className="btn-edit"
                       onClick={() => handleEditClick(user)}
@@ -403,7 +433,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Edit User Modal */}
+      {/* Edit User Modal - UPDATED with all clinician fields */}
       {showEditModal && selectedUser && (
         <div className="modal" onClick={handleBackdropClick}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -416,11 +446,11 @@ export default function AdminPage() {
             )}
             
             <div className="form-group">
-              <label>Username:</label>
+              <label>Name:</label>
               <input
                 type="text"
-                value={editForm.username}
-                onChange={(e) => setEditForm({...editForm, username: e.target.value})}
+                value={editForm.name}
+                onChange={(e) => setEditForm({...editForm, name: e.target.value})}
                 required
               />
             </div>
@@ -458,6 +488,44 @@ export default function AdminPage() {
                     placeholder="Enter license number"
                     className="full-width"
                   />
+                </div>
+
+                <div className="form-group">
+                  <label>Phone:</label>
+                  <input
+                    type="tel"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                    placeholder="Enter work phone"
+                    className="full-width"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Clinician's Address:</label>
+                  <textarea
+                    value={editForm.address}
+                    onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                    placeholder="Enter clinic address"
+                    rows="3"
+                    className="full-width"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Primary Branch:</label>
+                  <select
+                    value={editForm.primaryBranchId}
+                    onChange={(e) => setEditForm({...editForm, primaryBranchId: e.target.value})}
+                    className="full-width"
+                  >
+                    <option value="">Select Branch</option>
+                    {branches.map(branch => (
+                      <option key={branch.branch_id} value={branch.branch_id}>
+                        {branch.city} - {branch.location}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="form-group">
@@ -511,7 +579,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Create User Modal */}
+      {/* Create User Modal - UPDATED with all clinician fields */}
       {showCreateModal && (
         <div className="modal" onClick={handleBackdropClick}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -525,11 +593,11 @@ export default function AdminPage() {
             
             <form onSubmit={handleCreateUser}>
               <div className="form-group">
-                <label>Username:</label>
+                <label>Name:</label>
                 <input
                   type="text"
-                  value={newUser.username}
-                  onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({...newUser, name: e.target.value})}
                   required
                 />
               </div>
@@ -578,6 +646,44 @@ export default function AdminPage() {
                       className="full-width"
                       required
                     />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Phone:</label>
+                    <input
+                      type="tel"
+                      value={newUser.phone}
+                      onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
+                      placeholder="Enter work phone"
+                      className="full-width"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Clinician's Address:</label>
+                    <textarea
+                      value={newUser.address}
+                      onChange={(e) => setNewUser({...newUser, address: e.target.value})}
+                      placeholder="Enter clinic address"
+                      rows="3"
+                      className="full-width"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Primary Branch:</label>
+                    <select
+                      value={newUser.primaryBranchId}
+                      onChange={(e) => setNewUser({...newUser, primaryBranchId: e.target.value})}
+                      className="full-width"
+                    >
+                      <option value="">Select Branch</option>
+                      {branches.map(branch => (
+                        <option key={branch.branch_id} value={branch.branch_id}>
+                          {branch.city} - {branch.location}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="form-group">

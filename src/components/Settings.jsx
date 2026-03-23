@@ -94,13 +94,10 @@ export default function Settings() {
 
   return (
     <div className="settings-container">
-      <div className="settings-header">
-        <button className="back-button" onClick={() => navigate('/')}>
+      <h1 className="page-header">Settings</h1>
+      <button className="back-button" onClick={() => navigate('/')}>
           ← Back to Home
-        </button>
-        <h1>Settings</h1>
-        {user && <p className="settings-user-info">{user.username || user.email}</p>}
-      </div>
+        </button> <br />
 
       {message.text && (
         <div className={`message ${message.type}`}>
@@ -113,47 +110,51 @@ export default function Settings() {
         <div className="settings-section">
           <h2>Notification Preferences</h2>
           <div className="settings-grid">
-            <label className="settings-checkbox">
+            <label className="checkbox-item">
+              <span className="checkbox-text">Email Notifications</span>
+              <span className="checkbox-description">Receive updates via email</span>
               <input 
                 type="checkbox" 
                 checked={emailNotifications}
                 onChange={(e) => setEmailNotifications(e.target.checked)}
               />
-              <span className="checkbox-text">Email Notifications</span>
-              <span className="checkbox-description">Receive updates via email</span>
+              <span className="toggle-switch"></span>
             </label>
 
-            <label className="settings-checkbox">
+            <label className="checkbox-item">
+              <span className="checkbox-text">SMS Reminders</span>
+              <span className="checkbox-description">Get text reminders for appointments</span>
               <input 
                 type="checkbox" 
                 checked={smsReminders}
                 onChange={(e) => setSmsReminders(e.target.checked)}
               />
-              <span className="checkbox-text">SMS Reminders</span>
-              <span className="checkbox-description">Get text reminders for appointments</span>
+              <span className="toggle-switch"></span>
             </label>
 
-            <label className="settings-checkbox">
+            <label className="checkbox-item">
+              <span className="checkbox-text">Appointment Reminders</span>
+              <span className="checkbox-description">Receive reminders before sessions</span>
               <input 
                 type="checkbox" 
                 checked={appointmentReminders}
                 onChange={(e) => setAppointmentReminders(e.target.checked)}
               />
-              <span className="checkbox-text">Appointment Reminders</span>
-              <span className="checkbox-description">Receive reminders before sessions</span>
+              <span className="toggle-switch"></span>
             </label>
 
-            <label className="settings-checkbox">
+            <label className="checkbox-item">
+              <span className="checkbox-text">Marketing Emails</span>
+              <span className="checkbox-description">Newsletters and promotions</span>
               <input 
                 type="checkbox" 
                 checked={marketingEmails}
                 onChange={(e) => setMarketingEmails(e.target.checked)}
               />
-              <span className="checkbox-text">Marketing Emails</span>
-              <span className="checkbox-description">Newsletters and promotions</span>
+              <span className="toggle-switch"></span>
             </label>
 
-            <div className="settings-select">
+            <div className="form-group">
               <label>Reminder Timing</label>
               <select value={reminderTime} onChange={(e) => setReminderTime(e.target.value)}>
                 <option value="15 min">15 minutes before</option>
@@ -169,7 +170,7 @@ export default function Settings() {
         <div className="settings-section">
           <h2>Display Preferences</h2>
           <div className="settings-grid">
-            <div className="settings-select">
+            <div className="form-group">
               <label>Language</label>
               <select value={language} onChange={(e) => setLanguage(e.target.value)}>
                 <option value="en">English</option>
@@ -177,7 +178,7 @@ export default function Settings() {
               </select>
             </div>
 
-            <div className="settings-select">
+            <div className="form-group">
               <label>Time Zone</label>
               <select value={timezone} onChange={(e) => setTimezone(e.target.value)}>
                 <option value="Asia/Yangon">Yangon (UTC+6:30)</option>
@@ -186,7 +187,7 @@ export default function Settings() {
               </select>
             </div>
 
-            <div className="settings-select">
+            <div className="form-group">
               <label>Date Format</label>
               <select value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}>
                 <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -201,29 +202,30 @@ export default function Settings() {
         <div className="settings-section">
           <h2>Privacy & Security</h2>
           <div className="settings-grid">
-            <label className="settings-checkbox">
+            <label className="checkbox-item">
+              <span className="checkbox-text">Share data with clinicians</span>
+              <span className="checkbox-description">Allow clinicians to view your history</span>
               <input 
                 type="checkbox" 
                 checked={shareDataWithClinicians}
                 onChange={(e) => setShareDataWithClinicians(e.target.checked)}
               />
-              <span className="checkbox-text">Share data with clinicians</span>
-              <span className="checkbox-description">Allow clinicians to view your history</span>
+              <span className="toggle-switch"></span>
             </label>
 
-            <div className="settings-button-group">
+            <div className="button-group-row">
               <span className="button-label">Two-Factor Authentication</span>
               <button 
-                className={`toggle-button ${twoFactorEnabled ? 'enabled' : ''}`}
+                className={`toggle-btn ${twoFactorEnabled ? 'enabled' : ''}`}
                 onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
               >
                 {twoFactorEnabled ? 'Disable' : 'Enable'}
               </button>
             </div>
 
-            <div className="settings-button-group">
+            <div className="button-group-row">
               <span className="button-label">Download My Data</span>
-              <button className="action-button">Download</button>
+              <button className="action-btn">Download</button>
             </div>
           </div>
         </div>
@@ -232,9 +234,9 @@ export default function Settings() {
         <div className="settings-section danger">
           <h2>Danger Zone</h2>
           <div className="settings-grid">
-            <div className="settings-button-group">
+            <div className="button-group-row">
               <span className="button-label">Delete Account</span>
-              <button className="delete-button" onClick={handleDeleteAccount}>
+              <button className="delete-btn" onClick={handleDeleteAccount}>
                 Delete Account
               </button>
             </div>
@@ -243,10 +245,10 @@ export default function Settings() {
 
         {/* Action Buttons */}
         <div className="settings-actions">
-          <button className="save-button" onClick={handleSaveSettings}>
+          <button className="btn-save" onClick={handleSaveSettings}>
             Save Settings
           </button>
-          <button className="reset-button" onClick={handleResetToDefault}>
+          <button className="btn-cancel" onClick={handleResetToDefault}>
             Reset to Default
           </button>
         </div>

@@ -7,7 +7,10 @@ const router = express.Router();
 router.get("/availability/:clinicianId", (req, res) => {
   const { clinicianId } = req.params;
   
-  const sql = "SELECT * FROM clinicianavailability WHERE clinicianID = ? ORDER BY FIELD(day_of_the_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), startTime";
+  console.log("🔍 Fetching availability for user ID:", clinicianId);
+  
+  // Using userID column name
+  const sql = "SELECT * FROM clinicianavailability WHERE userID = ? ORDER BY FIELD(day_of_the_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), startTime";
   
   db.query(sql, [clinicianId], (err, results) => {
     if (err) {
@@ -32,10 +35,10 @@ router.post("/availability", (req, res) => {
     return res.status(400).json({ message: "End time must be after start time" });
   }
   
-  // Check for overlapping slots
+  // Check for overlapping slots - using userID column
   const overlapSql = `
     SELECT * FROM clinicianavailability 
-    WHERE clinicianID = ? 
+    WHERE userID = ? 
     AND day_of_the_week = ?
     AND (
       (startTime <= ? AND endTime > ?) OR
@@ -60,7 +63,8 @@ router.post("/availability", (req, res) => {
       return res.status(400).json({ message: "This time slot overlaps with existing availability" });
     }
     
-    const insertSql = "INSERT INTO clinicianavailability (clinicianID, day_of_the_week, startTime, endTime) VALUES (?, ?, ?, ?)";
+    // Insert using userID column
+    const insertSql = "INSERT INTO clinicianavailability (userID, day_of_the_week, startTime, endTime) VALUES (?, ?, ?, ?)";
     
     db.query(insertSql, [clinicianID, day_of_the_week, startTime, endTime], (err, result) => {
       if (err) {

@@ -78,21 +78,21 @@ export default function ProfileDropdown() {
   // Get initials for avatar
   const getInitials = () => {
     if (!user) return "?";
-    if (user.username) return user.username.charAt(0).toUpperCase();
+    if (user.name) return user.name.charAt(0).toUpperCase();  // Changed username to name
     if (user.email) return user.email.charAt(0).toUpperCase();
     return "U";
   };
 
-  // Generate avatar color based on username
+  // Generate avatar color based on name
   const getAvatarColor = () => {
     const colors = [
       "#667eea", "#764ba2", "#dc3545", "#28a745", 
       "#ffc107", "#17a2b8", "#6f42c1", "#fd7e14"
     ];
     
-    if (!user || !user.username) return colors[0];
+    if (!user || !user.name) return colors[0];  // Changed username to name
     
-    const hash = user.username.split("").reduce((acc, char) => {
+    const hash = user.name.split("").reduce((acc, char) => {  // Changed username to name
       return acc + char.charCodeAt(0);
     }, 0);
     
@@ -137,7 +137,7 @@ export default function ProfileDropdown() {
           {profilePicUrl ? (
             <img 
               src={profilePicUrl} 
-              alt={user.username || "Profile"} 
+              alt={user.name || "Profile"}  // Changed username to name
               className="profile-avatar-img"
               onError={(e) => {
                 e.target.style.display = 'none';
@@ -155,7 +155,7 @@ export default function ProfileDropdown() {
             {getInitials()}
           </div>
         </div>
-        <span className="profile-name">{user.username || user.email}</span>
+        <span className="profile-name">{user.name || user.email}</span>  {/* Changed username to name */}
         <svg 
           className={`dropdown-arrow ${isOpen ? 'open' : ''}`}
           width="12" 
@@ -180,7 +180,7 @@ export default function ProfileDropdown() {
               {profilePicUrl ? (
                 <img 
                   src={profilePicUrl} 
-                  alt={user.username || "Profile"} 
+                  alt={user.name || "Profile"}  // Changed username to name
                   className="dropdown-avatar-img"
                   onError={(e) => {
                     e.target.style.display = 'none';
@@ -199,7 +199,7 @@ export default function ProfileDropdown() {
               </div>
             </div>
             <div className="dropdown-user-info">
-              <div className="dropdown-username">{user.username || "User"}</div>
+              <div className="dropdown-username">{user.name || "User"}</div>  {/* Changed username to name */}
               <div className="dropdown-email">{user.email}</div>
               <div className="dropdown-role">{user.type || "Standard User"}</div>
             </div>
@@ -219,7 +219,6 @@ export default function ProfileDropdown() {
           {/* STAFF MENU ITEMS */}
           {isStaffUser && (
             <>
-
               <Link to="/staff/book-appointment" className="dropdown-item" onClick={() => setIsOpen(false)}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="2"/>

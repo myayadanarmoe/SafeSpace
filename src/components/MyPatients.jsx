@@ -83,36 +83,38 @@ export default function MyPatients() {
   }, [searchTerm, statusFilter, dateFilter, appointments]);
 
   const fetchAppointments = async (clinicianId) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`http://localhost:5000/api/appointments/clinician/${clinicianId}`);
-      const data = await res.json();
+  setLoading(true);
+  try {
+    const res = await fetch(`http://localhost:5000/api/appointments/clinician/${clinicianId}`);
+    const data = await res.json();
+    
+    // Filter out cancelled appointments
+    const activeAppointments = data.filter(appt => appt.status !== 'cancelled');
+    
+    // Group appointments by patient using user_id
+    const grouped = activeAppointments.reduce((acc, appt) => {
+      const patientId = appt.user_id; // ✅ Use user_id from API
       
-      // Filter out cancelled appointments
-      const activeAppointments = data.filter(appt => appt.status !== 'cancelled');
-      
-      // Group appointments by patient
-      const grouped = activeAppointments.reduce((acc, appt) => {
-        if (!acc[appt.patientID]) {
-          acc[appt.patientID] = {
-            patientId: appt.patientID,
-            patientName: appt.patient_name,
-            patientEmail: appt.patient_email,
-            appointments: []
-          };
-        }
-        acc[appt.patientID].appointments.push(appt);
-        return acc;
-      }, {});
-      
-      setAppointments(Object.values(grouped));
-    } catch (err) {
-      console.error("Error fetching appointments:", err);
-      setMessage({ text: "Error loading appointments", type: "error" });
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (!acc[patientId]) {
+        acc[patientId] = {
+          patientId: patientId, // ✅ This is now 10, not undefined
+          patientName: appt.patient_name,
+          patientEmail: appt.patient_email,
+          appointments: []
+        };
+      }
+      acc[patientId].appointments.push(appt);
+      return acc;
+    }, {});
+    
+    setAppointments(Object.values(grouped));
+  } catch (err) {
+    console.error("Error fetching appointments:", err);
+    setMessage({ text: "Error loading appointments", type: "error" });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchPatientRecords = async (patientId) => {
     try {
@@ -257,7 +259,7 @@ export default function MyPatients() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patientId: selectedAppointment.patientID,
+          patientId: selectedAppointment.user_id, 
           clinicianId: user.id,
           appointmentId: selectedAppointment.appointmentID,
           ...newRecord
@@ -810,3 +812,4 @@ export default function MyPatients() {
     </div>
   );
 }
+
