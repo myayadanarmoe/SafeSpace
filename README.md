@@ -1,16 +1,55 @@
-# React + Vite
+# Safe Space Mental Health Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A tele-mental health platform for Myanmar providing resources, online and in-person therapy sessions.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The program is built using **React** (Frontend) and **MySQL** (Database - Local Setup).
 
-## React Compiler
+## Quick Links
+[INSTALL.md](INSTALL.md)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+### For Patients
+- Register
+- Book online/in-person appointments
+- Monthly appointment limits (Standard: pay per appointment, Premium: unlimited, Youth: 2)
+- View medical records & prescriptions
+- Secure video consultations
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### For Clinicians (Psychiatrists/Psychologists/Therapists)
+- Manage appointment schedule
+- Access patient medical history
+- Write session notes
+- Prescribe medications
+- Add/update diagnoses
+
+### For Admins
+- Manage all users
+- Verify youth registrations
+- View system analytics
+- Manage branches and rooms
+
+### For Staff
+- Manage offline users
+- Assign to clinicians and rooms
+
+## Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| Frontend | React |
+| Backend | Node.js / Express |
+| Database | MySQL (Local) |
+| Authentication | bcrypt |
+| File Uploads | multer |
+
+## Project Structure
+safe-space/
+├── backend/ # config, controllers, middleware, routes & uploads
+├── src/ # assets, components (jsx), styles (css), App.jsx and main.jsx
+├── INSTALL.md # Complete setup guide
+└── README.md # This file
+
+**© 2026 Safe Space Mental Health Platform**
