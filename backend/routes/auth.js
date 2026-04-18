@@ -9,25 +9,28 @@ router.post("/signup", async (req, res) => {
   console.log("🔥 SIGNUP HIT");
   console.log("BODY:", req.body);
 
-  const { username, email, password } = req.body;
+  const { name, email, password } = req.body;
 
-  if (!username || !email || !password) {
+  if (!name || !email || !password) {
     return res.status(400).json({ message: "All fields are required" });
+  }
+
+  // Basic length check (frontend already validates pattern)
+  if (password.length < 8) {
+    return res.status(400).json({ message: "Password must be at least 8 characters" });
   }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+    const sql = "INSERT INTO users (name, email, password, type) VALUES (?, ?, ?, 'Standard User')";
 
-    db.query(sql, [username, email, hashedPassword], (err, result) => {
+    db.query(sql, [name, email, hashedPassword], (err, result) => {
       if (err) {
         console.error("❌ MySQL error:", err);
 
         if (err.code === "ER_DUP_ENTRY") {
-          if (err.sqlMessage.includes("username")) {
-            return res.status(400).json({ message: "Username already exists" });
-          } else {
+          if (err.sqlMessage.includes("email")) {
             return res.status(400).json({ message: "Email already exists" });
           }
         }
@@ -36,7 +39,7 @@ router.post("/signup", async (req, res) => {
       }
 
       const userId = result.insertId;
-      db.query("SELECT id, username, email, type, profile_pic, created_at FROM users WHERE id = ?", [userId], (err, userData) => {
+      db.query("SELECT id, name, email, type, profile_pic, created_at FROM users WHERE id = ?", [userId], (err, userData) => {
         if (err) {
           return res.status(201).json({ message: "User created successfully" });
         }
@@ -64,9 +67,7 @@ router.post("/login", async (req, res) => {
   }
 
   try {
-    console.log("🔍 Searching for user with email:", email);
-    
-    const sql = "SELECT * FROM users WHERE email = ?";
+    const sql = "SELECT id, name, email, type, profile_pic, created_at, password FROM users WHERE email = ?";
     
     db.query(sql, [email], async (err, results) => {
       if (err) {
@@ -74,33 +75,19 @@ router.post("/login", async (req, res) => {
         return res.status(500).json({ message: "Database error" });
       }
 
-      console.log(`📊 Found ${results.length} users`);
-
       if (results.length === 0) {
-        console.log("❌ No user found with email:", email);
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
       const user = results[0];
-      console.log("✅ User found:", { 
-        id: user.id, 
-        username: user.username, 
-        email: user.email,
-        type: user.type 
-      });
-
-      console.log("🔑 Comparing passwords...");
       const isPasswordValid = await bcrypt.compare(password, user.password);
-      console.log("🔑 Password valid:", isPasswordValid);
 
       if (!isPasswordValid) {
-        console.log("❌ Invalid password for email:", email);
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
       const { password: _, ...userWithoutPassword } = user;
       
-      console.log("✅ Login successful for:", email);
       res.json({ 
         message: "Login successful",
         user: userWithoutPassword

@@ -16,6 +16,8 @@ import StaffBooking from "./components/StaffBooking";
 import StaffSchedule from "./components/StaffSchedule";
 import StaffPatients from "./components/StaffPatients";
 import Settings from "./components/Settings";
+import PaymentPage from "./components/PaymentPage";
+import AdminVerifications from "./components/AdminVerifications";
 
 function App() {
   return (
@@ -38,6 +40,8 @@ function App() {
         <Route path="/staff/schedule" element={<StaffSchedule />} />
         <Route path="/staff/patients" element={<StaffPatients />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/students-verification" element={<AdminVerifications />} />
       </Routes>
     </Router>
   );

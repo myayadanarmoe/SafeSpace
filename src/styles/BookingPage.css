@@ -1,6 +1,56 @@
 @import './variables.css';
 @import './utilities.css';
 
+/* user badges */
+.user-type-info {
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: flex-start !important;
+}
+
+.user-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 18px !important;
+  border-radius: 40px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+  border: none !important;
+}
+
+/* Premium User - Purple theme - FORCE OVERRIDE */
+.user-badge.premium-user {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+}
+
+/* Youth User - Dark Purple theme */
+.user-badge.youth-user {
+  background: linear-gradient(135deg, #4a0072 0%, #7b1fa2 100%) !important;
+  color: white !important;
+}
+
+/* Standard User - Gray theme */
+.user-badge.standard-user {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+  color: white !important;
+}
+
+/* Dark mode support */
+.dark-mode .user-badge.premium-user {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+}
+
+.dark-mode .user-badge.youth-user {
+  background: linear-gradient(135deg, #3a0056 0%, #6a0080 100%) !important;
+}
+
+.dark-mode .user-badge.standard-user {
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+}
+
 /* Booking-specific styles */
 .booking-container {
   max-width: 1200px;
@@ -50,12 +100,7 @@
 
 .doctor-info-details {
   padding: 20px;
-}
-
-.doctor-info-details h2 {
-  margin: 0 0 5px 0;
-  color: var(--text-primary);
-  font-size: 1.3rem;
+  text-align: center;
 }
 
 .doctor-info-specialty {
@@ -67,6 +112,15 @@
   font-size: 0.85rem;
   font-weight: 600;
   margin-bottom: 15px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.doctor-info-details h2 {
+  margin: 0 0 5px 0;
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  text-align: center;
 }
 
 .doctor-info-about {
@@ -74,12 +128,14 @@
   font-size: 0.95rem;
   line-height: 1.6;
   margin-bottom: 15px;
+  text-align: center;
 }
 
 .doctor-info-diagnoses {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: center;
 }
 
 .diagnosis-badge {
@@ -404,3 +460,4 @@
     text-align: center;
   }
 }
+

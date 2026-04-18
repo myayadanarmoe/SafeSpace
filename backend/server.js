@@ -17,7 +17,12 @@ import moodsRoutes from "./routes/moods.js";
 import therapiesRoutes from "./routes/therapies.js";
 import medicalrecordsRoutes from "./routes/medicalrecords.js";
 import branchesRoutes from "./routes/branches.js";
-import rooms from "./routes/rooms.js"
+import roomsRoutes from "./routes/rooms.js";
+import paymentRoutes from "./routes/payments.js";
+import verificationRoutes from "./routes/verifications.js";
+
+// Import middleware
+import { requirePremium } from "./middleware/subscriptionCheck.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,7 +52,30 @@ app.use("/api", moodsRoutes);              // /api/moods/...
 app.use("/api", therapiesRoutes);          // /api/therapies/...
 app.use("/api", medicalrecordsRoutes);     // /api/medicalrecords/...
 app.use("/api", branchesRoutes);           // /api/branches/...
-app.use("/api", rooms);                    // /api/rooms/...
+app.use("/api", roomsRoutes);                    // /api/rooms/...
+app.use("/api", paymentRoutes);            // /api/payments/...
+app.use("/api", verificationRoutes);       // /api/verifications/...
+
+// ===== Premium-only routes (protected by subscription check) =====
+// Example: Premium-only webinar access
+app.get("/api/premium/webinars", requirePremium, (req, res) => {
+  res.json({ 
+    webinars: [
+      { id: 1, title: "Advanced CBT Techniques", date: "2026-05-15" },
+      { id: 2, title: "Mindfulness for Anxiety", date: "2026-05-22" }
+    ] 
+  });
+});
+
+// Example: Premium-only resources
+app.get("/api/premium/resources", requirePremium, (req, res) => {
+  res.json({ 
+    resources: [
+      { id: 1, title: "Complete CBT Workbook", type: "PDF" },
+      { id: 2, title: "Guided Meditation Library", type: "Audio" }
+    ] 
+  });
+});
 
 // ===== Start Server =====
 app.listen(PORT, () => {
@@ -63,4 +91,7 @@ app.listen(PORT, () => {
   console.log(`   - Moods: /api/moods`);
   console.log(`   - Therapies: /api/therapies`);
   console.log(`   - Medical Records: /api/medicalrecords`);
+  console.log(`   - Payments: /api/payments`);
+  console.log(`   - Verifications: /api/verifications`);
+  console.log(`   - Premium Routes: /api/premium/* (requires Premium subscription)`);
 });

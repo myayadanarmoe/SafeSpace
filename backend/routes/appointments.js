@@ -1,5 +1,6 @@
 import express from "express";
 import db from "../config/db.js";
+import { checkAppointmentEligibility, incrementMonthlyAppointmentCount } from "../middleware/subscriptionCheck.js";
 
 const router = express.Router();
 
@@ -39,6 +40,27 @@ router.get("/appointments/patient/:patientId", (req, res) => {
       return res.status(500).json({ message: "Database error" });
     }
     res.json(results);
+  });
+});
+
+// Get monthly appointment count for a user (for subscription limits)
+router.get("/appointments/patient/:userId/monthly-count", (req, res) => {
+  const { userId } = req.params;
+  
+  const sql = `
+    SELECT COUNT(*) as count 
+    FROM appointments 
+    WHERE user_id = ? 
+    AND status IN ('scheduled', 'completed')
+    AND scheduled_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+  `;
+  
+  db.query(sql, [userId], (err, results) => {
+    if (err) {
+      console.error("❌ MySQL error:", err);
+      return res.status(500).json({ message: "Database error" });
+    }
+    res.json({ count: results[0].count, max: 2 });
   });
 });
 
@@ -186,8 +208,8 @@ router.get("/appointments/check", (req, res) => {
   });
 });
 
-// Create new appointment with token
-router.post("/appointments", (req, res) => {
+// Create new appointment with token and subscription check
+router.post("/appointments", checkAppointmentEligibility, (req, res) => {
   const { patientId, clinicianId, date, time, type = 'online', roomId } = req.body;
   
   console.log("📝 Booking appointment with data:", { patientId, clinicianId, date, time, type, roomId });
@@ -259,7 +281,7 @@ router.post("/appointments", (req, res) => {
   });
 });
 
-// Helper function to create appointment with token
+// Helper function to create appointment with token and update monthly count
 function createAppointment(patientId, actualClinicianId, date, time, type, roomId, res) {
   const tokenNumber = generateTokenNumber();
   
@@ -276,6 +298,16 @@ function createAppointment(patientId, actualClinicianId, date, time, type, roomI
     }
     
     console.log("✅ Appointment created with ID:", result.insertId, "Token:", tokenNumber);
+    
+    // Update monthly appointment count for youth users
+    const userSql = "SELECT type FROM users WHERE id = ?";
+    db.query(userSql, [patientId], (err, userResults) => {
+      if (!err && userResults.length > 0 && userResults[0].type === 'Youth User') {
+        incrementMonthlyAppointmentCount(patientId).catch(err => {
+          console.error("Error updating monthly count:", err);
+        });
+      }
+    });
     
     res.status(201).json({ 
       message: "Appointment booked successfully",

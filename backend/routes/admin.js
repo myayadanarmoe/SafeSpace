@@ -458,4 +458,76 @@ router.get("/admin/user-types", (req, res) => {
   res.json(types);
 });
 
+// Get pending youth verifications
+router.get("/admin/verifications/youth/pending", (req, res) => {
+  const sql = `
+    SELECT v.*, u.name, u.email
+    FROM youth_verifications v
+    JOIN users u ON v.userID = u.id
+    WHERE v.status = 'pending'
+    ORDER BY v.submitted_at ASC
+  `;
+  
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("❌ MySQL error:", err);
+      return res.status(500).json({ message: "Database error" });
+    }
+    res.json(results);
+  });
+});
+
+// Approve youth verification
+router.put("/admin/verifications/youth/approve/:id", (req, res) => {
+  const { id } = req.params;
+  const { adminId } = req.body;
+  
+  db.beginTransaction((err) => {
+    if (err) return res.status(500).json({ message: "Transaction error" });
+    
+    const updateSql = `
+      UPDATE youth_verifications 
+      SET status = 'approved', reviewed_at = NOW(), reviewed_by = ?
+      WHERE id = ?
+    `;
+    
+    db.query(updateSql, [adminId, id], (updateErr) => {
+      if (updateErr) {
+        return db.rollback(() => {
+          res.status(500).json({ message: "Database error" });
+        });
+      }
+      
+      // Get userID
+      db.query("SELECT userID FROM youth_verifications WHERE id = ?", [id], (getErr, getResults) => {
+        if (getErr || getResults.length === 0) {
+          return db.rollback(() => {
+            res.status(404).json({ message: "Verification not found" });
+          });
+        }
+        
+        const userId = getResults[0].userID;
+        
+        // Update user type to Youth User
+        db.query("UPDATE users SET type = 'Youth User' WHERE id = ?", [userId], (userErr) => {
+          if (userErr) {
+            return db.rollback(() => {
+              res.status(500).json({ message: "User update error" });
+            });
+          }
+          
+          db.commit((commitErr) => {
+            if (commitErr) {
+              return db.rollback(() => {
+                res.status(500).json({ message: "Commit error" });
+              });
+            }
+            res.json({ message: "Verification approved" });
+          });
+        });
+      });
+    });
+  });
+});
+
 export default router;

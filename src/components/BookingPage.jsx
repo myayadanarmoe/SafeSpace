@@ -22,9 +22,8 @@ const generateTimeSlots = (startTime, endTime) => {
   
   while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
     const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`;
-    slots.push(timeStr); // Store in 24h format for comparison
+    slots.push(timeStr);
     
-    // Add 30 minutes
     currentMin += 30;
     if (currentMin >= 60) {
       currentHour += 1;
@@ -47,6 +46,7 @@ export default function BookingPage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [bookingMessage, setBookingMessage] = useState({ text: "", type: "" });
+  const [checkingEligibility, setCheckingEligibility] = useState(false);
 
   // Get today's date for min date input
   const today = new Date();
@@ -112,7 +112,6 @@ export default function BookingPage() {
   const updateAvailableSlots = () => {
     const selectedDay = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
     
-    // Get availability for the selected day
     const dayAvailability = availability.filter(slot => slot.day_of_the_week === selectedDay);
     
     if (dayAvailability.length === 0) {
@@ -120,16 +119,13 @@ export default function BookingPage() {
       return;
     }
 
-    // Generate all possible slots
     let allSlots = [];
     dayAvailability.forEach(slot => {
       const slots = generateTimeSlots(slot.startTime, slot.endTime);
       allSlots = [...allSlots, ...slots];
     });
 
-    // Remove duplicates
     allSlots = [...new Set(allSlots)];
-    
     setAvailableSlots(allSlots);
   };
 
@@ -142,10 +138,94 @@ export default function BookingPage() {
     setSelectedSlot(slot);
   };
 
+  // Check if user can book based on subscription
+  const checkBookingEligibility = async () => {
+    if (!user) return false;
+
+    // Premium users can always book
+    if (user.type === 'Premium User') {
+      return { eligible: true };
+    }
+
+    // Youth users - check monthly limit
+    if (user.type === 'Youth User') {
+      try {
+        const res = await fetch(`http://localhost:5000/api/appointments/patient/${user.id}/monthly-count`);
+        const data = await res.json();
+        
+        if (data.count >= 2) {
+          return { 
+            eligible: false, 
+            message: "You've used your 2 free appointments this month. Please upgrade to Premium for unlimited appointments.",
+            needsUpgrade: true 
+          };
+        }
+        return { eligible: true };
+      } catch (err) {
+        console.error("Error checking youth limit:", err);
+        return { eligible: true }; // Allow on error
+      }
+    }
+
+    // Standard users - need to pay per session
+    if (user.type === 'Standard User') {
+      return { 
+        eligible: true, 
+        needsPayment: true,
+        message: "This is a pay-per-session appointment ($50/session). You'll be redirected to payment."
+      };
+    }
+
+    return { eligible: true };
+  };
+
   const handleBooking = async () => {
     if (!selectedSlot || !user) return;
-
+    
+    setCheckingEligibility(true);
+    
     try {
+      // Check if user is eligible to book
+      const eligibility = await checkBookingEligibility();
+      
+      if (!eligibility.eligible) {
+        setBookingMessage({ text: eligibility.message, type: "error" });
+        setCheckingEligibility(false);
+        
+        // If youth user needs upgrade, show upgrade button
+        if (eligibility.needsUpgrade) {
+          setTimeout(() => {
+            if (window.confirm("Would you like to upgrade to Premium for unlimited appointments?")) {
+              navigate('/subscription');
+            }
+          }, 1000);
+        }
+        return;
+      }
+      
+      // For Standard users, redirect to payment first
+      if (eligibility.needsPayment) {
+        // Store booking details in session storage
+        const bookingDetails = {
+          doctorId: parseInt(doctorId),
+          doctorName: doctor?.name || doctor?.username,
+          date: selectedDate,
+          time: selectedSlot,
+          type: 'online',
+          amount: 50, // Session price
+          clinicianId: parseInt(doctorId)
+        };
+        sessionStorage.setItem('pendingBooking', JSON.stringify(bookingDetails));
+        
+        setBookingMessage({ text: eligibility.message, type: "info" });
+        setTimeout(() => {
+          navigate('/payment', { state: { bookingDetails } });
+        }, 1500);
+        setCheckingEligibility(false);
+        return;
+      }
+      
+      // Proceed with free booking for Premium/Youth users
       const res = await fetch("http://localhost:5000/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -161,17 +241,20 @@ export default function BookingPage() {
       const data = await res.json();
 
       if (res.ok) {
-        setBookingMessage({ text: "Appointment booked successfully!", type: "success" });
+        setBookingMessage({ text: `Appointment booked successfully! Token: ${data.tokenNumber}`, type: "success" });
         setSelectedSlot(null);
-        fetchBookedSlots(); // Refresh booked slots
-        setTimeout(() => setBookingMessage({ text: "", type: "" }), 3000);
+        fetchBookedSlots();
+        setTimeout(() => setBookingMessage({ text: "", type: "" }), 5000);
       } else {
         setBookingMessage({ text: data.message || "Booking failed", type: "error" });
         setTimeout(() => setBookingMessage({ text: "", type: "" }), 3000);
       }
     } catch (err) {
+      console.error("Booking error:", err);
       setBookingMessage({ text: "Network error", type: "error" });
       setTimeout(() => setBookingMessage({ text: "", type: "" }), 3000);
+    } finally {
+      setCheckingEligibility(false);
     }
   };
 
@@ -207,19 +290,30 @@ export default function BookingPage() {
         <button onClick={() => navigate('/online-therapy')} className="back-button">
           ← Back to Doctors
         </button>
-        <h1>Book Appointment with {doctor.username}</h1>
+        <h1>Book Appointment with {doctor.name || doctor.username}</h1>
       </div>
+
+      {/* Show user type info */}
+      {user && (
+        <div className="user-type-info">
+          <span className={`user-badge ${user.type?.toLowerCase().replace(' ', '-')}`}>
+            {user.type === 'Premium User' ? '✨ Premium Member' : 
+             user.type === 'Youth User' ? '🎓 Youth Member (2 free/month)' : 
+             '💳 Pay per session ($50/session)'}
+          </span>
+        </div>
+      )}
 
       <div className="booking-content">
         {/* Doctor Info Card */}
         <div className="doctor-info-card">
           <img 
             src={doctor.profile_pic || "https://via.placeholder.com/300x200?text=Doctor"} 
-            alt={doctor.username}
+            alt={doctor.name || doctor.username}
             className="doctor-info-image"
           />
           <div className="doctor-info-details">
-            <h2>{doctor.username}</h2>
+            <h2>{doctor.name || doctor.username}</h2>
             <span className="doctor-info-specialty">{doctor.type}</span>
             <p className="doctor-info-about">{doctor.about}</p>
             <div className="doctor-info-diagnoses">
@@ -279,8 +373,21 @@ export default function BookingPage() {
                       <p>
                         Confirm booking for {new Date(selectedDate).toLocaleDateString()} at {convertTo12Hour(selectedSlot)}
                       </p>
-                      <button onClick={handleBooking} className="confirm-button">
-                        Confirm Booking
+                      {user?.type === 'Standard User' && (
+                        <p className="payment-note">💳 This session costs $50. You'll be redirected to payment.</p>
+                      )}
+                      {user?.type === 'Youth User' && (
+                        <p className="free-note">🎓 This is one of your 2 free monthly appointments!</p>
+                      )}
+                      {user?.type === 'Premium User' && (
+                        <p className="premium-note">✨ Premium member - unlimited appointments included!</p>
+                      )}
+                      <button 
+                        onClick={handleBooking} 
+                        className="confirm-button"
+                        disabled={checkingEligibility}
+                      >
+                        {checkingEligibility ? "Checking..." : "Confirm Booking"}
                       </button>
                     </div>
                   )}

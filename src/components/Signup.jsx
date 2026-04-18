@@ -5,7 +5,7 @@ import "../styles/SignUp.css";
 export default function SignUp() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: "",
+    name: "",
     email: "",
     password: ""
   });
@@ -21,17 +21,25 @@ export default function SignUp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Let browser validation happen first - don't prevent it
+    // The form won't submit if HTML5 validation fails
+    
     setIsLoading(true);
     setMessage("");
 
     try {
-      const res = await fetch("http://localhost:5000/signup", {
+      const res = await fetch("http://localhost:5000/api/signup", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        }),
       });
 
       const data = await res.json();
@@ -40,12 +48,11 @@ export default function SignUp() {
         setMessage("Account created successfully! Redirecting to login...");
         
         setFormData({
-          username: "",
+          name: "",
           email: "",
           password: ""
         });
         
-        // Redirect to login page after 2 seconds
         setTimeout(() => {
           navigate("/login");
         }, 2000);
@@ -67,19 +74,19 @@ export default function SignUp() {
 
         {message && (
           <p style={{ 
-            color: message.includes("successfully") ? "lightgreen" : 
-                   message.includes("Network") ? "orange" : "yellow" 
+            color: message.includes("successfully") ? "#90EE90" : 
+                   message.includes("Network") ? "#FFA500" : "#FFB6C1" 
           }}>
             {message}
           </p>
         )}
 
-        <label>Username</label>
+        <label>Full Name</label>
         <input
           type="text"
-          name="username"
-          placeholder="Choose a username"
-          value={formData.username}
+          name="name"
+          placeholder="Enter your full name"
+          value={formData.name}
           onChange={handleChange}
           required
           disabled={isLoading}
@@ -100,11 +107,13 @@ export default function SignUp() {
         <input
           type="password"
           name="password"
-          placeholder="Password (min. 6 characters)"
+          placeholder="Password"
           value={formData.password}
           onChange={handleChange}
           required
-          minLength="6"
+          minLength="8"
+          pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}"
+          title="Password must contain at least 8 characters, one uppercase, one lowercase, one number, and one special character (@$!%*?&)"
           disabled={isLoading}
         />
 

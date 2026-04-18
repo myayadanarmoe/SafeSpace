@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/Subscription.css"
+import "../styles/Subscription.css";
 
 export default function Subscription() {
   const navigate = useNavigate();
@@ -8,6 +8,8 @@ export default function Subscription() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showYouthForm, setShowYouthForm] = useState(false);
   const [showPremiumForm, setShowPremiumForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [studentIdFile, setStudentIdFile] = useState(null);
   const [youthFormData, setYouthFormData] = useState({
     fullName: "",
     dateOfBirth: "",
@@ -112,32 +114,140 @@ export default function Subscription() {
     if (!user) {
       navigate("/sign-up");
     } else {
+      // Check if user already has pending or approved verification
+      checkExistingVerification();
+    }
+  };
+
+  const checkExistingVerification = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/verifications/youth/status/${user.id}`);
+      const data = await res.json();
+      
+      if (data.verified) {
+        setMessage({ text: "You are already verified as a Youth member!", type: "success" });
+      } else if (data.status === 'pending') {
+        setMessage({ text: "You have a pending verification request. Please wait for admin approval.", type: "info" });
+      } else {
+        setShowYouthForm(true);
+      }
+    } catch (err) {
       setShowYouthForm(true);
     }
   };
 
-  const handleYouthSubmit = (e) => {
+  const handleYouthSubmit = async (e) => {
     e.preventDefault();
-    // Here you would send the youth verification data to your backend
-    setMessage({ 
-      text: "🎉 Youth verification submitted! If approved, you'll get 2 free appointments per month. We'll notify you within 24-48 hours.", 
-      type: "success" 
-    });
-    setTimeout(() => setMessage({ text: "", type: "" }), 6000);
-    setShowYouthForm(false);
+    setLoading(true);
+    
+    const formData = new FormData();
+    formData.append('userId', user.id);
+    formData.append('fullName', youthFormData.fullName);
+    formData.append('dateOfBirth', youthFormData.dateOfBirth);
+    formData.append('idType', youthFormData.idType);
+    formData.append('idNumber', youthFormData.idNumber);
+    formData.append('school', youthFormData.school);
+    formData.append('grade', youthFormData.grade);
+    formData.append('parentName', youthFormData.parentName);
+    formData.append('parentPhone', youthFormData.parentPhone);
+    formData.append('parentEmail', youthFormData.parentEmail);
+    
+    if (studentIdFile) {
+      formData.append('studentIdImage', studentIdFile);
+    }
+
+    try {
+      const res = await fetch("http://localhost:5000/api/verifications/youth", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage({ 
+          text: "🎉 Youth verification submitted! You'll receive an email within 24-48 hours after approval.", 
+          type: "success" 
+        });
+        setShowYouthForm(false);
+        // Reset form
+        setYouthFormData({
+          fullName: "",
+          dateOfBirth: "",
+          idType: "student",
+          idNumber: "",
+          school: "",
+          grade: "",
+          parentName: "",
+          parentPhone: "",
+          parentEmail: ""
+        });
+        setStudentIdFile(null);
+      } else {
+        setMessage({ text: data.message || "Submission failed", type: "error" });
+      }
+    } catch (err) {
+      setMessage({ text: "Network error", type: "error" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handlePremiumSubmit = (e) => {
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage({ text: "File size must be less than 5MB", type: "error" });
+        return;
+      }
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        setMessage({ text: "Please upload JPG, PNG, or PDF file", type: "error" });
+        return;
+      }
+      setStudentIdFile(file);
+    }
+  };
+
+  const handlePremiumSubmit = async (e) => {
     e.preventDefault();
-    // Here you would process the payment and upgrade the user
-    setMessage({ text: "✨ Premium subscription activated! Thank you for upgrading.", type: "success" });
-    setTimeout(() => setMessage({ text: "", type: "" }), 5000);
-    setShowPremiumForm(false);
+    setLoading(true);
+    
+    try {
+      const res = await fetch("http://localhost:5000/api/payments/upgrade-premium", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          amount: 29.99,
+          payment_method: "card",
+          card_last4: premiumFormData.cardNumber.slice(-4)
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage({ text: "✨ Premium subscription activated! Thank you for upgrading.", type: "success" });
+        setShowPremiumForm(false);
+        // Update user in localStorage
+        const updatedUser = { ...user, type: "Premium User" };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setUser(updatedUser);
+      } else {
+        setMessage({ text: data.message || "Payment failed", type: "error" });
+      }
+    } catch (err) {
+      setMessage({ text: "Network error", type: "error" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCloseModal = () => {
     setShowYouthForm(false);
     setShowPremiumForm(false);
+    setStudentIdFile(null);
   };
 
   return (
@@ -160,7 +270,7 @@ export default function Subscription() {
         {plans.map((plan) => (
           <div key={plan.id} className={`plan-card ${plan.id}`}>
             {plan.badge && <span className="plan-badge">{plan.badge}</span>}
-            <div className="plan-header" style={{ background: `linear-gradient(135deg, ${plan.color} 0%, ${adjustColor(plan.color, -20)} 100%)` }}>
+            <div className="plan-header" style={{ background: `linear-gradient(135deg, ${plan.color} 0%, ${plan.color} 100%)` }}>
               <h2>{plan.name}</h2>
               <div className="plan-price">
                 <span className="currency">$</span>
@@ -290,6 +400,19 @@ export default function Subscription() {
                 </div>
               </div>
 
+              {/* File Upload */}
+              <div className="form-group">
+                <label>Student ID / Document Upload *</label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,application/pdf"
+                  onChange={handleFileChange}
+                  required
+                  className="file-input"
+                />
+                <small className="file-hint">Upload student ID card, NRC, or passport (Max 5MB, JPG/PNG/PDF)</small>
+              </div>
+
               <h3 className="form-section-title">Parent/Guardian Information (if under 18)</h3>
 
               <div className="form-row">
@@ -315,12 +438,14 @@ export default function Subscription() {
               </div>
 
               <div className="verification-note">
-                <p>📸 Please have your student ID ready for upload. You will receive a verification email within 24-48 hours.</p>
+                <p>📸 Your uploaded document will be reviewed by our team.</p>
                 <p className="highlight-text">✅ Upon approval: 2 FREE appointments per month + discounted additional sessions ($30/session)</p>
               </div>
 
               <div className="modal-actions">
-                <button type="submit" className="btn-create">Submit for FREE Verification</button>
+                <button type="submit" className="btn-create" disabled={loading}>
+                  {loading ? "Submitting..." : "Submit for FREE Verification"}
+                </button>
                 <button type="button" className="cancel-btn" onClick={handleCloseModal}>Cancel</button>
               </div>
             </form>
@@ -404,7 +529,9 @@ export default function Subscription() {
               </div>
 
               <div className="modal-actions">
-                <button type="submit" className="submit-btn premium">Subscribe Now - $29.99/month</button>
+                <button type="submit" className="submit-btn premium" disabled={loading}>
+                  {loading ? "Processing..." : "Subscribe Now - $29.99/month"}
+                </button>
                 <button type="button" className="cancel-btn" onClick={handleCloseModal}>Cancel</button>
               </div>
             </form>
@@ -413,10 +540,4 @@ export default function Subscription() {
       )}
     </div>
   );
-}
-
-// Helper function to adjust color brightness
-function adjustColor(hex, percent) {
-  // Simple color adjustment for gradient
-  return hex;
 }
