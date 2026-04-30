@@ -47,11 +47,4 @@ The program is built using **React** (Frontend) and **MySQL** (Database - Local 
 | Authentication | bcrypt |
 | File Uploads | multer |
 
-## Project Structure
-safe-space/
-├── backend/ # config, controllers, middleware, routes & uploads
-├── src/ # assets, components (jsx), styles (css), App.jsx and main.jsx
-├── INSTALL.md # Complete setup guide
-└── README.md # This file
-
 **© 2026 Safe Space Mental Health Platform**
