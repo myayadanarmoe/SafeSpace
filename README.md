@@ -8,6 +8,7 @@ The program is built using **React** (Frontend) and **MySQL** (Database - Local 
 
 ## Quick Links
 [Screen Cast](https://drive.google.com/file/d/1uhSku55mhbuVTfNGrd4OzCEEL1-wgWk1/view?usp=sharing)
+
 [INSTALL.md](INSTALL.md)
 
 ## Features
