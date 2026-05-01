@@ -1,13 +1,9 @@
-# Safe Space Mental Health Platform
-
-A tele-mental health platform for Myanmar providing resources, online and in-person therapy sessions.
-
 ## Overview
 
 The program is built using **React** (Frontend) and **MySQL** (Database - Local Setup).
 
 ## Quick Links
-[Screen Cast](https://drive.google.com/file/d/1uhSku55mhbuVTfNGrd4OzCEEL1-wgWk1/view?usp=sharing)
+[Screen Cast](https://drive.google.com/file/d/1GS3ApJooAwZyghUoi3Oirbx4LkGCIlvq/view?usp=sharing)
 
 [INSTALL.md](INSTALL.md)
 
